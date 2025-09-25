@@ -1,0 +1,9 @@
+[cam 1]
+mode: camera-streamer                  
+enable_rtsp: true                       
+rtsp_port: 8554                         
+port: 8080                              
+device: /dev/video0
+#device: /dev/v4l/by-id/usb-UnionImage_Co._Ltd_CCX2F3298_1234567890-video-index0                      
+resolution: 640x480                     
+max_fps: 15

@@ -1,3 +1,4 @@
 [Variables]
 nozzle_expansion_applied_offset = 0
+profile_name = 'kamp'
 

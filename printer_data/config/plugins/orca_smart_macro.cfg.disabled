@@ -1,0 +1,3 @@
+M104 S0 ; Stops OrcaSlicer from sending temp waits separately
+M140 S0
+print_start EXTRUDER=[first_layer_temperature] BED=[first_layer_bed_temperature] CHAMBER_TEMP=[chamber_temperature] MATERIAL=[filament_type[initial_extruder]]

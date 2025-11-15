@@ -1,73 +1,26 @@
-# Qidi Plus 4 Mainline (vanilla) Klipper/Kalico Guide
+# QIDI Plus 4 - Kalico (or mainline Klipper) wtih Raspberry Pi host
 
-# ![image](images/warning.gif) !!! DANGER - WARNING !!! ![image](images/warning.gif)
-This is a work in progress. Do not use any of these configs or instructions unless you know what you're doing!
+# !!! DANGER - WARNING !!!
+This is #work in progress. Do not use any of these configs or instructions unless you know what you're doing!
 These modifications are for experienced users. If you are not comfortable with a command line, linux, and electronics, please stop here!
 
 **ALSO NOTE: YOUR SCREEN WILL NOT WORK AFTER FOLLOWING THESE STEPS**
 
-You could move to a Klipper screen setup to get a functioning screen. You could also check out [FreeDI](https://github.com/Phil1988/FreeDi) but it is not yet available for the Plus4.
+You could move to a KlipperScreen setup to get a functioning screen.
 
 ---
 
 # Introduction
-Flashing mainline klipper/kalico on the Qidi Plus4 is relatively easy but does require some effort to flash the toolhead board. You will need an ST-Link programmer or clone to flash the toolhead.
+Flashing Kalico (or mainline Klipper) on the QIDI Plus 4 is relatively easy. It does require some effort to flash the toolhead MCU. You will need an ST-Link programmer or clone to flash the toolhead.
+Alongside flashing the mainboard and toolhead MCUs, you will also need to be able to precicesly solder onto small PCB pads on the mainboard.
 
 # Backup
 Before proceeding, backup any and all data in your printer configs, particularly your `printer.cfg`, `gcode_macros.cfg` and any other files
-you may want to save. This can be done via the fluidd interface.
+you may want to save. This can be done via the Fluidd interface or by using the plugin [Klipper-Backup](https://klipperbackup.xyz/)
 
 ---
 
-# Flashing the host with an updated Armbian image
-## Tools required:
-* USB EMMC reader such as [this one](https://www.amazon.com/Vacatga-Adapter-EMMC-Adapter-52-6x16x10mm-2-07x0-63x0-39in/dp/B0D1MY7943?gQT=1)
-* A spare eMMC card (optional but recommended) if you want to preserve the original stock card
-
-## Flashing Steps
-1. Power down your printer and remove the eMMC card from the printer motherboard. It is held down with 2 screws.
-2. Download one of the following images:
-   - An older Q1 Pro image with KIAUH and Klipper preinstalled (https://github.com/frap129/armbian_qidi-q1-pro/releases).
-   - A newer image with nothing preinstalled (https://github.com/redrathnure/armbian-mkspi/releases/download/mkspi%2F1.0.2-25.2.1/Armbian-unofficial_25.2.1_Mkspi_bookworm_current_6.12.12.img.xz)
-
-   **Please Note: Many people have had problems getting the newer version to boot. This issues is being investigated. If your version doesn't boot, please try the Q1 Pro image.**
-3. Write the image to your eMMC card via your preferred method (Balena Etcher, dd, etc)
-
-    ### If you need wireless networking
-    1. After writing the image to your eMMC card, open your file manager and open the `armbi_boot` drive.
-    2. Rename the file `armbian_first_run.txt.template` to `armbian_first_run.txt`
-    3. Open the file in a text editor, and add the SSID and Password for your wifi network. Find the line for enabling wifi and change 0 to 1.
-        * `FR_net_change_defaults=1`
-        * `FR_net_wifi_enabled=1`
-        * `FR_net_wifi_ssid='MySSID'`
-        * `FR_net_wifi_key='MyWiFiKEY'`
-4. Unmount the eMMC card and re-install it into your printer and power on. If everything worked, you should now be able to access your printer via SSH.
-5. SSH into your printer.
-* If you're using the Q1 Image, the default username/password is `mks`. You will be asked to change your password on first login.
-* If you're using the clean image, the default username is `root` and the password is `1234`
-6. Install updates
-    Lets make sure our system is up-to-date with the latest software. Note that this should NOT change your kernel.
-    ```
-    sudo apt update && sudo apt upgrade
-    sudo apt install git -y
-    ```
-
-### Disable debug console
-By default, the Plus4 uses `/dev/ttyS2` to communicate with the toolhead. The fresh armbian image you just flashed uses `/dev/ttyS2` as a
-kernel debug console, so we need to disable that:
-```
-echo 'console=none' > sudo tee -a /boot/armbianEnv.txt
-
-# Grant user permissions and prevent getty from taking over the port
-echo 'KERNEL=="ttyS2",MODE="0660"' > /etc/udev/rules.d/99-ttyS2.rules
-systemctl mask serial-getty@ttyS2.service
-```
-For more information on these changes, see here: https://github.com/frap129/armbian_qidi-q1-pro#disable-debug-console-uart2--or-freeup-uart1-interface
-
----
-
-## Installing klipper/kalico, moonraker, fluidd/mainsail and friends
-**NOTE THAT IF YOU INSTALLED THE Q1PRO IMAGE FROM ABOVE, YOU CAN SKIP THESE STEPS AS KLIPPER AND FRIENDS ARE ALREADY INSTALLED. CONTINUE ON TO MAINBOARD FLASHING**
+## Installing Kalico (or mainline Klipper), Moonraker, Fluidd/Mainsail and others
 
 Now that we have a clean, fresh system, we can start installing the software needed to run the printer. If you want to do this manually, you certainly can.
 For everyone else, I recommend installing KIAUH.
@@ -244,8 +197,6 @@ This is the same basic process that we used to flash klipper on the main MCU
 
     ![image](images/flash_success-toolhead.png)
 4. Reboot the printer and you're done - you can now start configuring!
-
-# Configuring the newly flashed printer
 
 ---
 # Other References and Resources

@@ -199,6 +199,8 @@ This is the same basic process that we used to flash klipper on the main MCU
 4. Reboot the printer and you're done - you can now start configuring!
 
 ---
-# Other References and Resources
-- references from @transmutated - most likely the first person to flash the toolhead successfully: https://github.com/cgarwood82/plus4MainlineKlipperConfig/tree/main
-- Open Q1 repo - the Q1 Pro uses the same main board as the plus4: https://github.com/frap129/OpenQ1/tree/main
+
+# Special thanks
+- @Phrac; using your [QIDI Plus 4 flashing guide](https://github.com/phrac/plus4_kalico?tab=readme-ov-file) as the initial basis for this guide.
+- @53Aries; helping me troubleshoot the problems I encountered while setting up this modification to begin with.
+- @transmutated; referring to your [QIDI Plus 4 flashing guide](https://github.com/cgarwood82/plus4MainlineKlipperConfig) to help guide me through my initial modification.

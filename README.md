@@ -104,7 +104,7 @@ you will have to recover with the programmer. [Further details of Katapult deplo
 
 # Flashing the toolhead
 The toolhead takes quite a bit more work to flash. You will need to solder some pins on the board and you will also need an ST-Link programmer (or clone).
-The official ST-LINK programmer is what I used. You can purchase one from Digikey (or any other source). [This is the one I used](https://www.digikey.com/en/products/detail/stmicroelectronics/ST-LINK-V2/2214535)
+A clone ST-LINK programmer is what I used. You can purchase one from Amazon (or any other source). [This is the one I used](https://www.amazon.com/dp/B07SQV6VLZ)
 
 ## Preparing the toolhead
 Begin by unsliding the back cover of the toolhead, disconnecting all connectors, and unscrewing the board from the toolhead.

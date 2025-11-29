@@ -103,7 +103,15 @@ you will have to recover with the programmer. [Further details of Katapult deplo
 - [USB-C female breakout board](https://www.amazon.com/dp/B0DRVDHS5D)
 - Soldering iron and solder
 - Flux
+- Multimeter
 
+Begin by soldering 3 lengths of wire to the points shown in the image below (on the back of the main MCU). 
+Verify that you **did not** bridge the contacts by using a multimeter.
+
+Next, pass through the 3 wires to the front of the board and solder them to the USB-C female breakout board. 
+Mount the breakout board using tape or hot glue.
+
+<img width="2400" height="1110" alt="mcu_wiring" src="https://github.com/user-attachments/assets/7234c058-4ae0-4bce-808c-f10b4f9c5422" />
 
 ---
 

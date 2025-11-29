@@ -214,6 +214,8 @@ Referencing the image below, make the following connections:
 
 <img width="4416" height="1440" alt="toolhead_wiring" src="https://github.com/user-attachments/assets/99545fd3-7716-489c-86f4-fddec42f209c" />
 
+![TTL_adapter](https://github.com/user-attachments/assets/b1220b75-cca8-410c-96d4-29ca72d1df57)
+
 ---
 
 ## Flashing Klipper on the toolhead

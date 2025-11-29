@@ -221,9 +221,13 @@ This is the same basic process that we used to flash klipper on the main MCU
 
 ## Materials
 - JST-XH compatible crimper
-- [26AWG wire](https://www.amazon.com/dp/B0B3JD5K93)
+- [26AWG wire](https://www.amazon.com/dp/B0B3JD5K93) Re-use 1 of the 6 pin connectors 
 - [USB to TTL adapter](https://www.amazon.com/dp/B0BCYRFZJD)
 - [XH 2.54mm pin header](https://www.amazon.com/dp/B0BPRQBTGY)
+- [JST-XH 3 pin connectors](https://www.amazon.com/dp/B097BVPB38)
+
+## Creating the adapter
+Referencing the image below, create an adapter using 6 lengths of 26AWG wire 
 
 ---
 

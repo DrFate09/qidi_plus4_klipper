@@ -217,6 +217,16 @@ This is the same basic process that we used to flash klipper on the main MCU
 
 ---
 
+# Connecting the toolhead to the primary MCU
+
+## Materials
+- JST-XH compatible crimper
+- [26AWG wire](https://www.amazon.com/dp/B0B3JD5K93)
+- [USB to TTL adapter](https://www.amazon.com/dp/B0BCYRFZJD)
+- [XH 2.54mm pin header](https://www.amazon.com/dp/B0BPRQBTGY)
+
+---
+
 # Special thanks
 - @Phrac; using your [QIDI Plus 4 flashing guide](https://github.com/phrac/plus4_kalico?tab=readme-ov-file) as the initial basis for this guide.
 - @53Aries; helping me troubleshoot the problems I encountered while setting up this modification to begin with.

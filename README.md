@@ -112,6 +112,8 @@ Verify that you **did not** bridge the contacts by using a multimeter.
 Next, pass through the 3 wires to the front of the board and solder them to the USB-C female breakout board. 
 Mount the breakout board using double-sided tape or hot glue.
 
+Now, we have bypassed the on-board SoC and can directly connect the Raspberry Pi to the MCU using the USB data pins on PA11/PA12.
+
 <img width="2400" height="1110" alt="mcu_wiring" src="https://github.com/user-attachments/assets/7234c058-4ae0-4bce-808c-f10b4f9c5422" />
 
 ---

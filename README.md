@@ -104,13 +104,14 @@ A clone ST-LINK programmer is what I used. You can purchase one from Amazon (or 
 Begin by unsliding the back cover of the toolhead, disconnecting all connectors, and unscrewing the board from the toolhead.
 
 Next, you need to solder a 6 pin header on the board like the below image:
-![image](images/toolhead_with_pins.jpeg)
+![toolhead_with_pins](https://github.com/user-attachments/assets/14d5968c-32c2-4e1f-9a2e-761f0ec4c12c)
 
-Once the header is soldered, we need to wire it to the ST-LINK:
-![image](images/stlink-wiring.jpeg)
+Once the header is soldered, we need to wire it to the ST-LINK (or clone):
+![stlink-wiring-1](https://github.com/user-attachments/assets/dde1173e-9f4d-4b27-a64b-e16d1406ec65)
 
-Use the following wiring diagram
-![image](images/wiring-diagram.png)
+Use the following wiring diagram:
+
+<img width="670" height="607" alt="wiring-diagram" src="https://github.com/user-attachments/assets/36824e27-57cc-4ce8-be83-ac72ccabf5a1" />
 
 ```
 This ASCII diagram is courtesy @transmutated
@@ -134,20 +135,19 @@ I used the printer itself to flash the toolhead but you can use any other comput
 2. Install the ST-Link tools: `sudo apt install stlink-tools`
 3. Check that your ST-Link is recognized (and recognizing the toolhead): `st-info --probe`. You should see output similar to this:
 
-  ![image](images/st-info.png)
+    <img width="283" height="189" alt="st-info-1" src="https://github.com/user-attachments/assets/9d3c2e20-7363-4f50-a6c0-b91edcd1e510" />
 
-  Note that your output might not match exactly. What you are looking for is that it found an stlink programmer, and it detects a chip (above we see `chipid: 0x0423` and `descr: F4xx`).
-  If you don't see these things, double check your wiring.
+   Note that your output might not match exactly. What you are looking for is that it found an stlink programmer, and it detects a chip (above we see `chipid: 0x0423` and `descr: F4xx`).
+   If you don't see these things, double check your wiring.
 
 4. Next, we need to build katapult for the toolhead:
     ```
     cd ~/katapult
     make menuconfig
     ```
-
     Make sure your menuconfig matches this:
 
-    ![image](images/katapult-toolhead.png)
+    <img width="960" height="540" alt="katapult" src="https://github.com/user-attachments/assets/b033631b-aee4-4ec2-b318-2b63b7a5c848" />
 
     ```
     make clean
@@ -162,7 +162,7 @@ I used the printer itself to flash the toolhead but you can use any other comput
 
     You should see a message like this:
 
-    ![image](images/st-flash.png)
+    <img width="813" height="241" alt="st-flash" src="https://github.com/user-attachments/assets/05e07ff0-7ae0-4fd0-b19f-69a6c145c138" />
 
 6. Unhook your ST-Link, and put the toolhead board back into the printer. Reconnect all wires and reboot the printer.
 
@@ -175,7 +175,7 @@ This is the same basic process that we used to flash klipper on the main MCU
     ```
     Your menuconfig should match this for the toolhead:
 
-    ![image](images/klipper-toolhead.png)
+    <img width="960" height="540" alt="klipper" src="https://github.com/user-attachments/assets/969d96d4-2f6a-4121-b085-b710e4fdfe02" />
 
     ```
     make clean
@@ -189,7 +189,8 @@ This is the same basic process that we used to flash klipper on the main MCU
     ```
     You should see a successful flash like this:
 
-    ![image](images/flash_success-toolhead.png)
+    <img width="745" height="323" alt="flash_success-toolhead" src="https://github.com/user-attachments/assets/e0192953-8906-4f90-82b3-e0576ff41ace" />
+
 4. Reboot the printer and you're done - you can now start configuring!
 
 ---

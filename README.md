@@ -96,6 +96,17 @@ you will have to recover with the programmer. [Further details of Katapult deplo
 
 ---
 
+# Soldering the USB data connectioon
+
+## Materials
+- [30AWG wire](https://www.amazon.com/dp/B006C4AJWM)
+- [USB-C female breakout board](https://www.amazon.com/dp/B0DRVDHS5D)
+- Soldering iron and solder
+- Flux
+
+
+---
+
 # Flashing the toolhead
 The toolhead takes quite a bit more work to flash. You will need to solder some pins on the board and you will also need an ST-Link programmer (or clone).
 A clone ST-LINK programmer is what I used. You can purchase one from Amazon (or any other source). [This is the one I used](https://www.amazon.com/dp/B07SQV6VLZ)

@@ -96,7 +96,7 @@ you will have to recover with the programmer. [Further details of Katapult deplo
 
 ---
 
-# Soldering the USB data connectioon
+# Bypassing the on-board SoC
 
 ## Materials
 - [30AWG wire](https://www.amazon.com/dp/B006C4AJWM)
@@ -105,6 +105,7 @@ you will have to recover with the programmer. [Further details of Katapult deplo
 - Flux
 - Multimeter
 
+## Soldering the USB data points
 Begin by soldering 3 lengths of 30AWG wire to the points shown in the image below (on the back of the main MCU). 
 Verify that you **did not** bridge the contacts by using a multimeter.
 

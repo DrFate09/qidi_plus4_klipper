@@ -6,7 +6,7 @@ These modifications are for experienced users. If you are not comfortable with a
 
 **ALSO NOTE: YOUR OEM SCREEN WILL NOT WORK AFTER FOLLOWING THESE STEPS**
 
-You could move to a KlipperScreen setup to get a functioning screen.
+You can opt to replace the screen and move to a KlipperScreen setup to get a functioning display.
 
 ---
 

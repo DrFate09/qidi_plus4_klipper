@@ -233,6 +233,8 @@ You will use a set of crimpers to securely plug in the wires to the connectors a
 ![toolhead_adapter](https://github.com/user-attachments/assets/35ffa418-e710-41fd-9a4c-b7333b3e6179)
 
 ## Making the connections
+Referencing the image below, make the following connections:
+
 1. Connect the toolhead MCU cable to the XH 2.54mm header.
 2. Connect the JST-XH 6 pin connector to the original connector for the toolhead MCU.
 3. Connect the JST-XH 3 pin connector to the USB to TTL adapter. I desolder the 6 pin header on the adapter and installed a 3 pin JST-XH header to make plugging the connector easier.

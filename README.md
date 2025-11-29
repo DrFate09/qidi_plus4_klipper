@@ -12,7 +12,7 @@ You can opt to replace the screen and move to a KlipperScreen setup to get a fun
 
 # Introduction
 Flashing Kalico (or mainline Klipper) on the QIDI Plus 4 is relatively easy. It does require some effort to flash the toolhead MCU. You will need an ST-Link programmer or clone to flash the toolhead.
-Alongside flashing the mainboard and toolhead MCUs, you will also need to be able to precicesly solder onto small PCB pads on the mainboard.
+Alongside flashing the mainboard and toolhead MCUs, you will also need to be able to precicesly solder onto small PCB pads on the main MCU.
 
 # Backup
 Before proceeding, backup any and all data in your printer configs, particularly your `printer.cfg`, `gcode_macros.cfg` and any other files

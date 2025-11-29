@@ -33,7 +33,7 @@ The following steps will get KIAUH installed (using SSH):
   ./kiauh/kiauh.sh
 ```
 You will now be entered into the KIAUH main menu where you can install the software needed. At a minimum install:
-* Klipper (or Kalico)
+* Kalcio (or Klipper)
 * Moonraker
 * Fluidd (or Mainsail)
 

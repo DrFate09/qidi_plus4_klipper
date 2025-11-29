@@ -112,7 +112,7 @@ Verify that you **did not** bridge the contacts by using a multimeter.
 Next, pass through the 3 wires to the front of the board and solder them to the USB-C female breakout board. 
 Mount the breakout board using double-sided tape or hot glue.
 
-Now, we have bypassed the on-board SoC and can directly connect the Raspberry Pi to the MCU using the USB data pins on PA11/PA12.
+We have now bypassed the on-board SoC and can directly connect the Raspberry Pi to the MCU using the USB data pins on PA11/PA12.
 
 <img width="2400" height="1110" alt="mcu_wiring" src="https://github.com/user-attachments/assets/7234c058-4ae0-4bce-808c-f10b4f9c5422" />
 
@@ -221,13 +221,23 @@ This is the same basic process that we used to flash klipper on the main MCU
 
 ## Materials
 - JST-XH compatible crimper
-- [26AWG wire](https://www.amazon.com/dp/B0B3JD5K93) Re-use 1 of the 6 pin connectors 
+- [26AWG wire](https://www.amazon.com/dp/B0B3JD5K93)  Re-use 1 of the 6 pin connectors 
 - [USB to TTL adapter](https://www.amazon.com/dp/B0BCYRFZJD)
-- [XH 2.54mm pin header](https://www.amazon.com/dp/B0BPRQBTGY)
+- [XH 2.54mm 6 pin header](https://www.amazon.com/dp/B0BPRQBTGY)
 - [JST-XH 3 pin connectors](https://www.amazon.com/dp/B097BVPB38)
 
 ## Creating the adapter
-Referencing the image below, create an adapter using 6 lengths of 26AWG wire 
+Referencing the image below, create an adapter using 6 lengths of 26AWG wire, XH 2.54 pin header and JST-XH 3 & 6 pin connectors.
+You will use a set of crimpers to securely plug in the wires to the connectors and header. 
+
+![toolhead_adapter](https://github.com/user-attachments/assets/35ffa418-e710-41fd-9a4c-b7333b3e6179)
+
+## Making the connections
+1. Connect the toolhead MCU cable to the XH 2.54mm header.
+2. Connect the JST-XH 6 pin connector to the original connector for the toolhead MCU.
+3. Connect the JST-XH 3 pin connector to the USB to TTL adapter.
+
+<img width="4416" height="1440" alt="toolhead_wiring" src="https://github.com/user-attachments/assets/99545fd3-7716-489c-86f4-fddec42f209c" />
 
 ---
 

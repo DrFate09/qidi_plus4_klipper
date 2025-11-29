@@ -4,7 +4,7 @@
 This is **work in progress**. Do not use any of these configs or instructions unless you know what you're doing!
 These modifications are for experienced users. If you are not comfortable with a command line, linux, and electronics, please stop here!
 
-**ALSO NOTE: YOUR OEM SCREEN WILL NOT WORK AFTER FOLLOWING THESE STEPS**
+**ALSO NOTE: YOUR OEM SCREEN AND QIDI BOX WILL NOT WORK AFTER FOLLOWING THESE STEPS**
 
 You can opt to replace the screen and move to a KlipperScreen setup to get a functioning display.
 
@@ -247,6 +247,7 @@ This is the same basic process that we used to flash klipper on the main MCU
 
 # End result
 This is what the connection between the Pi, main MCU and toolhead MCU should look like (ignore the ToqueCan installed on top of the Pi)
+
 ![final_wiring](https://github.com/user-attachments/assets/54bb2906-7554-4f27-abc9-0825798e2357)
 
 ---

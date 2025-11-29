@@ -1,10 +1,10 @@
 # QIDI Plus 4 - Kalico (or mainline Klipper) wtih Raspberry Pi host
 
 # !!! DANGER - WARNING !!!
-This is #work in progress. Do not use any of these configs or instructions unless you know what you're doing!
+This is **work in progress**. Do not use any of these configs or instructions unless you know what you're doing!
 These modifications are for experienced users. If you are not comfortable with a command line, linux, and electronics, please stop here!
 
-**ALSO NOTE: YOUR SCREEN WILL NOT WORK AFTER FOLLOWING THESE STEPS**
+**ALSO NOTE: YOUR OEM SCREEN WILL NOT WORK AFTER FOLLOWING THESE STEPS**
 
 You could move to a KlipperScreen setup to get a functioning screen.
 
@@ -22,25 +22,22 @@ you may want to save. This can be done via the Fluidd interface or by using the 
 
 ## Installing Kalico (or mainline Klipper), Moonraker, Fluidd/Mainsail and others
 
-Now that we have a clean, fresh system, we can start installing the software needed to run the printer. If you want to do this manually, you certainly can.
-For everyone else, I recommend installing KIAUH.
+Starting with a Raspberry Pi 4 (or another other Linux box), we can start installing the software needed to run the printer. To begin, lets install KIAUH.
+
 ## Installing KIAUH
-KIAUH is a helper script to install klipper/kalico, mainsail, fluidd, crowsnest, moonraker, and many other things you may need or want.
-The following steps will get KIAUH installed:
+KIAUH is a helper script to install Klipper/Kalico, Mainsail, Fluidd, Crowsnest, Moonraker, and many other things you may need or want.
+The following steps will get KIAUH installed (using SSH):
 ```
   cd ~
   git clone https://github.com/dw-0/kiauh.git
   ./kiauh/kiauh.sh
 ```
-You will now be entered into the KIAUH main menu where you can install the software needed. At a minium install
+You will now be entered into the KIAUH main menu where you can install the software needed. At a minimum install:
 * Klipper (or Kalico)
-* moonraker
-* fluidd (or mainsail)
+* Moonraker
+* Fluidd (or Mainsail)
 
 KIAUH should automatically install all the required modules and start the services for you.
-
-After everything is installed, we can move our backed up configurations over to the new setup:
-Copy your `printer.cfg` and `gcode_macros` to `~/printer_data/config`
 
 ---
 
@@ -59,12 +56,12 @@ you will have to recover with the programmer. [Further details of Katapult deplo
     make menuconfig
     ```
     Once you are in `make menuconfig`, you want to build katapult with the following options:
-    ![image](images/katapult_mainmcu.png)
+    <img width="960" height="540" alt="katapult" src="https://github.com/user-attachments/assets/aaeb641d-18ff-4294-94c4-5ff8477b9edf" />
 
-    After you are sure your menuconfig matches the above settings, you can quit menuconfig (press q then y to save)
+    After you are sure that your menuconfig matches the above settings, you can quit menuconfig (press q then y to save)
 3. run `make -j4` to build katapult
 4. Copy `~/katapult/out/deployer.bin` to your computer via your favorite method (scp, sftp, or using the fluidd interface)
-5. On your computer, format the microSD card as FAT32
+5. On your computer, format a microSD card as FAT32
 6. Copy the `deployer.bin` file to the microSD card and rename it `qd_mcu.bin`
 7. Eject the microSD card and plug it into the microSD card slot on the printer.
 8. Once the card is inserted, find the button labeled "RESET" on the main board and press it
@@ -85,7 +82,7 @@ you will have to recover with the programmer. [Further details of Katapult deplo
     make menuconfig
     ```
     Configure the make arguments in `menuconfig` to match these settings:
-    ![image](images/klipper_mainmcu.png)
+    <img width="960" height="540" alt="klipper" src="https://github.com/user-attachments/assets/2ba1dc97-5d31-4b86-82ac-5377cb8c026f" />
 
 5. Save and quit by pressing `q` then `y` to save
 6. Build klipper by running `make clean; make -j4`
@@ -95,9 +92,6 @@ you will have to recover with the programmer. [Further details of Katapult deplo
     cd ~/katapult/scripts
     python3 flashtool.py -b 500000 -d /dev/ttyS0 -f ~/klipper/out/klipper.bin
     ```
-    You should see output similar to the following if the flash worked:
-    ![image](images/flash_success-mainmcu.png)
-
 9. Klipper is now flashed to the main MCU. We can now move on to the toolhead.
 
 ---

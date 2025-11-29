@@ -22,7 +22,7 @@ you may want to save. This can be done via the Fluidd interface or by using the 
 
 ## Installing Kalico (or mainline Klipper), Moonraker, Fluidd/Mainsail and others
 
-Starting with a Raspberry Pi 4 (or another other Linux box), we can start by installing the software needed to run the printer. To begin, lets install KIAUH.
+Starting with a Raspberry Pi 4 (or another other Linux box), we can begin by installing the software needed to run the printer, primarly by using KIAUH.
 
 ## Installing KIAUH
 KIAUH is a helper script to install Klipper/Kalico, Mainsail, Fluidd, Crowsnest, Moonraker, and many other things you may need or want.

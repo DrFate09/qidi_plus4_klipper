@@ -188,6 +188,34 @@ I used the printer itself to flash the toolhead but you can use any other comput
 
 6. Unhook your ST-Link, and put the toolhead board back into the printer. Reconnect all wires and reboot the printer.
 
+---
+
+# Connecting the toolhead to the primary MCU
+
+## Materials
+- JST-XH compatible crimper
+- [26AWG wire](https://www.amazon.com/dp/B0B3JD5K93)  Re-use 1 of the 6 pin connectors 
+- [USB to TTL adapter](https://www.amazon.com/dp/B0BCYRFZJD)
+- [XH 2.54mm 6 pin header](https://www.amazon.com/dp/B0BPRQBTGY)
+- [JST-XH 3 pin connectors](https://www.amazon.com/dp/B097BVPB38)
+
+## Creating the adapter
+Referencing the image below, create an adapter using 6 lengths of 26AWG wire, XH 2.54 pin header and JST-XH 3 & 6 pin connectors.
+You will use a set of crimpers to securely plug in the wires to the connectors and header. 
+
+![toolhead_adapter](https://github.com/user-attachments/assets/35ffa418-e710-41fd-9a4c-b7333b3e6179)
+
+## Making the connections
+Referencing the image below, make the following connections:
+
+1. Connect the toolhead MCU cable to the XH 2.54mm header.
+2. Connect the JST-XH 6 pin connector to the original connector for the toolhead MCU.
+3. Connect the JST-XH 3 pin connector to the USB to TTL adapter. I desolder the 6 pin header on the adapter and installed a 3 pin JST-XH header to make plugging the connector easier.
+
+<img width="4416" height="1440" alt="toolhead_wiring" src="https://github.com/user-attachments/assets/99545fd3-7716-489c-86f4-fddec42f209c" />
+
+---
+
 ## Flashing Klipper on the toolhead
 This is the same basic process that we used to flash klipper on the main MCU
 1. Build klipper
@@ -217,29 +245,9 @@ This is the same basic process that we used to flash klipper on the main MCU
 
 ---
 
-# Connecting the toolhead to the primary MCU
-
-## Materials
-- JST-XH compatible crimper
-- [26AWG wire](https://www.amazon.com/dp/B0B3JD5K93)  Re-use 1 of the 6 pin connectors 
-- [USB to TTL adapter](https://www.amazon.com/dp/B0BCYRFZJD)
-- [XH 2.54mm 6 pin header](https://www.amazon.com/dp/B0BPRQBTGY)
-- [JST-XH 3 pin connectors](https://www.amazon.com/dp/B097BVPB38)
-
-## Creating the adapter
-Referencing the image below, create an adapter using 6 lengths of 26AWG wire, XH 2.54 pin header and JST-XH 3 & 6 pin connectors.
-You will use a set of crimpers to securely plug in the wires to the connectors and header. 
-
-![toolhead_adapter](https://github.com/user-attachments/assets/35ffa418-e710-41fd-9a4c-b7333b3e6179)
-
-## Making the connections
-Referencing the image below, make the following connections:
-
-1. Connect the toolhead MCU cable to the XH 2.54mm header.
-2. Connect the JST-XH 6 pin connector to the original connector for the toolhead MCU.
-3. Connect the JST-XH 3 pin connector to the USB to TTL adapter. I desolder the 6 pin header on the adapter and installed a 3 pin JST-XH header to make plugging the connector easier.
-
-<img width="4416" height="1440" alt="toolhead_wiring" src="https://github.com/user-attachments/assets/99545fd3-7716-489c-86f4-fddec42f209c" />
+# End result
+This is what the connection between the Pi, main MCU and toolhead MCU should look like (ignore the ToqueCan installed on top of the Pi)
+![final_wiring](https://github.com/user-attachments/assets/54bb2906-7554-4f27-abc9-0825798e2357)
 
 ---
 
@@ -247,3 +255,4 @@ Referencing the image below, make the following connections:
 - @Phrac; using your [QIDI Plus 4 flashing guide](https://github.com/phrac/plus4_kalico?tab=readme-ov-file) as the initial basis for this guide.
 - @53Aries; helping me troubleshoot the problems I encountered while setting up this modification to begin with.
 - @transmutated; referring to your [QIDI Plus 4 flashing guide](https://github.com/cgarwood82/plus4MainlineKlipperConfig) to help guide me through my initial modification.
+- @ApplePi; for sharing your Kalico config files (especially macros) with me.

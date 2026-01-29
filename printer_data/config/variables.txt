@@ -1,5 +1,0 @@
-[Variables]
-nozzle_expansion_applied_offset = 0
-nozzle_expansion_coefficient = -0.062499999999168665
-profile_name = 'kamp'
-

@@ -1,0 +1,119 @@
+{
+  "red_balance": {
+    "type": "int",
+    "current": 1000,
+    "min": 1,
+    "max": 65535,
+    "step": 1,
+    "default": 1000,
+    "flags": "slider"
+  },
+  "blue_balance": {
+    "type": "int",
+    "current": 1000,
+    "min": 1,
+    "max": 65535,
+    "step": 1,
+    "default": 1000,
+    "flags": "slider"
+  },
+  "colour_correction_matrix": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "lens_shading": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload,"
+  },
+  "black_level": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "green_equalisation": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "gamma": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "denoise": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "sharpen": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "defective_pixel_correction": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "colour_denoise": {
+    "type": "u8",
+    "current": null,
+    "min": 0,
+    "max": 255,
+    "step": 1,
+    "default": 0,
+    "flags": "has-payload"
+  },
+  "Image": {
+    "type": "Controls",
+    "current": null,
+    "min": null,
+    "max": null,
+    "step": null,
+    "default": null,
+    "flags": ""
+  },
+  "digital_gain": {
+    "type": "int",
+    "current": 1000,
+    "min": 1,
+    "max": 65535,
+    "step": 1,
+    "default": 1000,
+    "flags": ""
+  }
+}

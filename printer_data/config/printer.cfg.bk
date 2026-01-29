@@ -1,3 +1,6 @@
+# [include mmu/optional/client_macros.cfg]
+# [include mmu/addons/blobifier.cfg]
+# [include mmu/addons/mmu_erec_cutter.cfg]
 #######################################
 # Plugins, Includes & Basic Setup
 #######################################
@@ -7,10 +10,10 @@
 # [include mmu/base/*.cfg]
 # [include mmu/optional/*.cfg]
 
-#[include mmu/*.cfg]
-#[include mmu/addons/*.cfg]
-[include mmu/base/*.cfg]
-#[include mmu/optional/*.cfg]
+# [include mmu/*.cfg]
+# [include mmu/addons/*.cfg]
+#[include mmu/base/*.cfg]
+# [include mmu/optional/*.cfg]
 
 [include plugins/*.cfg]
 
@@ -554,13 +557,13 @@ stepper: stepper_x
 #######################################
 # Filament Sensors
 #######################################
-[filament_switch_sensor filament]
-switch_pin: PC3
-pause_on_runout: True
-runout_gcode:
-    M118 Filament tangle detected
-event_delay: 3.0
-pause_delay: 0.5
+# [filament_switch_sensor filament]
+# switch_pin: PC3
+# pause_on_runout: True
+# runout_gcode:
+#     M118 Filament tangle detected
+# event_delay: 3.0
+# pause_delay: 0.5
 
 # [filament_switch_sensor toolhead]
 # switch_pin: ^toolhead:PA3

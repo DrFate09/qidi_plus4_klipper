@@ -65,6 +65,7 @@
         "profile": "qidi_toolhead",
         "method": "serial",
         "interface": "can0",
+        "baudrate": 500000,
         "notes": "",
         "is_katapult": true,
         "is_bridge": false,
@@ -72,6 +73,10 @@
         "magic_baud_tested": false,
         "use_magic_baud": false,
         "dfu_exit_tested": false,
-        "use_dfu_exit": false
+        "use_dfu_exit": false,
+        "exclude_from_batch": false,
+        "last_flashed": "2026-02-03 10:16:46",
+        "flashed_version": "v2026.01.00-1-g10f1d9da-dirty",
+        "flashed_commit": "10f1d9da803f"
     }
 ]

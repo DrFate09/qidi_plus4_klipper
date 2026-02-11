@@ -35,14 +35,16 @@
         "profile": "toquecan",
         "method": "can",
         "interface": "can0",
+        "baudrate": 250000,
         "notes": "",
         "is_katapult": true,
-        "is_bridge": false,
+        "is_bridge": true,
         "dfu_id": null,
         "magic_baud_tested": false,
         "use_magic_baud": false,
         "dfu_exit_tested": false,
-        "use_dfu_exit": false
+        "use_dfu_exit": false,
+        "exclude_from_batch": false
     },
     {
         "name": "Raspberry Pi",

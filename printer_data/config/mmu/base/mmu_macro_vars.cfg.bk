@@ -223,11 +223,11 @@ variable_park_complete          : 95, 305, 10, 0, 5	; x,y,z-hop,z_hop_ramp,retra
 #   x_coord, y_coord, z_hop(delta)
 # Use -999,-999,0 for no movement at that stage (no-op).
 # All movement will be at the established movement plane (z-height)
-variable_pre_unload_position    : -999, -999, 0	; x,y,z-hop position before unloading starts
-variable_post_form_tip_position : -999, -999, 0	; x,y,z-hop position after form/cut tip on unload
-variable_pre_load_position      : -999, -999, 0	; x,y,z-hop position before loading starts
+variable_pre_unload_position    : 95,305,0	; x,y,z-hop position before unloading starts
+variable_post_form_tip_position : 95,305,0	; x,y,z-hop position after form/cut tip on unload
+variable_pre_load_position      : 95,324,0	; x,y,z-hop position before loading starts
 
-variable_restore_xy_pos         : "next"	; last|next|none - What x,y position the toolhead should travel to after a "toolchange"
+variable_restore_xy_pos         : "last"	; last|next|none - What x,y position the toolhead should travel to after a "toolchange"
 
 variable_park_travel_speed      : 200		; Speed for any travel movement XY(Z) in mm/s
 variable_park_lift_speed        : 15		; Z-only travel speed in mm/s
@@ -305,7 +305,7 @@ variable_pin_loc_xy             : 304, 20	; x,y coordinates of depressor pin
 # This is used to determine the starting position and to create a small safety distance that aids in generating momentum.
 # For example, Filametrix cuts along X axis towards Xmin requiring a positive value, whereas A4T-A4C cuts on Y axis towards
 # Ymax requring a negative number
-variable_pin_park_dist          : 5		; Distance in mm (+ve or -ve) from 'variable_pin_loc_xy'
+variable_pin_park_dist          : 2		; Distance in mm (+ve or -ve) from 'variable_pin_loc_xy'
 
 # Position of the toolhead when the cutter is fully compressed. Should leave a small headroom from the
 # extremes of your printer edges (e.g. it should be a bit larger than 0, or whatever Xmin is) to avoid
@@ -315,7 +315,7 @@ variable_pin_loc_compressed_xy  : 304, 4.2	; x,y coordinates of fully depressed 
 
 # Retract length and speed after the cut so that the cutter blade doesn't
 # get stuck on return to origin position
-variable_rip_length             : 0		; Distance in mm to retract to aid lever decompression (>= 0)
+variable_rip_length             : 1.0		; Distance in mm to retract to aid lever decompression (>= 0)
 variable_rip_speed              : 3		; Speed mm/s
 
 # Pushback of the remaining tip from the cold end into the hotend. This does
@@ -323,7 +323,7 @@ variable_rip_speed              : 3		; Speed mm/s
 # stays in hot end and the "nail head" of the cut is pushed back past the
 # PTFE/metal junction so it cannot cause clogging problems on future loads.
 # Cannot be larger than 'retract_length' - `toolhead_ooze_reduction`
-variable_pushback_length        : 8		; TUNE ME: PTFE tube length + 3mm is good starting point
+variable_pushback_length        : 15.0		; TUNE ME: PTFE tube length + 3mm is good starting point
 variable_pushback_dwell_time    : 0		; Time in ms to dwell after the pushback
 
 # Speed related settings for tip cutting
@@ -333,10 +333,10 @@ variable_pushback_dwell_time    : 0		; Time in ms to dwell after the pushback
 #   blade to the initial contact with the filament
 # - We then make a slow move for the actual cut to happen
 variable_travel_speed           : 150		; Speed mm/s
-variable_cut_fast_move_speed    : 32		; Speed mm/s
-variable_cut_slow_move_speed    : 8		; Speed mm/s
-variable_evacuate_speed         : 150		; Speed mm/s
-variable_cut_dwell_time         : 500		; Time in ms to dwell at the cut point
+variable_cut_fast_move_speed    : 50		; Speed mm/s
+variable_cut_slow_move_speed    : 15		; Speed mm/s
+variable_evacuate_speed         : 100		; Speed mm/s
+variable_cut_dwell_time         : 100		; Time in ms to dwell at the cut point
 variable_cut_fast_move_fraction : 1.0		; Fraction of the move that uses fast move
 variable_extruder_move_speed    : 25		; Speed mm/s for all extruder movement
 
@@ -344,7 +344,7 @@ variable_extruder_move_speed    : 25		; Speed mm/s for all extruder movement
 # we make a safer but longer move if we are closer to the pin than this
 # specified margin. Usually setting these to the size of the toolhead
 # (plus a small margin) should be good enough
-variable_safe_margin_xy         : 30, 30	; Approx toolhead width +5mm, height +5mm)
+variable_safe_margin_xy         : 50, 50	; Approx toolhead width +5mm, height +5mm)
 
 # If gantry servo option is installed, enable the servo and set up and down
 # angle positions
@@ -372,8 +372,8 @@ gcode: # Leave empty
 # described in terms of total volume and progression of squeeze intensity
 # printing/standalone. This can be separately controlled when printing or
 # standalone
-variable_ramming_volume            : 16		; Volume in mm^3, 0 = disabled (optionally let slicer do it)
-variable_ramming_volume_standalone : 24		; Volume in mm^3, 0 = disabled
+variable_ramming_volume            : 0		; Volume in mm^3, 0 = disabled (optionally let slicer do it)
+variable_ramming_volume_standalone : 0		; Volume in mm^3, 0 = disabled
 
 # Optionally set for temperature change (reduction). The wait will occur
 # before nozzle separation if 'use_fast_skinnydip: False' else after cooling
@@ -390,7 +390,7 @@ variable_toolchange_fan_speed   : 50		; Fan speed % if using fan_assist enabled
 # A good starting point# for slower move is unloading_speed_start/cooling_moves.
 # Too fast a slower movement can lead to excessively long tips or hairs
 variable_unloading_speed_start  : 80		; Speed in mm/s for initial fast movement
-variable_unloading_speed        : 12		; Speed in mm/s for slow move to cooling zone
+variable_unloading_speed        : 18		; Speed in mm/s for slow move to cooling zone
 
 # Step 3 - Cooling Moves
 # The cooling move allows the filament to harden while constantly moving back
@@ -401,10 +401,10 @@ variable_unloading_speed        : 12		; Speed in mm/s for slow move to cooling z
 # length is then the distance from here to top of heatsink (this is the length
 # length of the cooling moves). The final cooling move is a fast movement to
 # break the string formed.
-variable_cooling_tube_position  : 28		; Start of cooling tube. DragonST:35, DragonHF:30, Mosquito:30, Revo:35, RapidoHF:27
-variable_cooling_tube_length    : 17.4		; Movement length. DragonST:15, DragonHF:10, Mosquito:20, Revo:10, RapidoHF:10
+variable_cooling_tube_position  : 35		; Start of cooling tube. DragonST:35, DragonHF:30, Mosquito:30, Revo:35, RapidoHF:27
+variable_cooling_tube_length    : 10		; Movement length. DragonST:15, DragonHF:10, Mosquito:20, Revo:10, RapidoHF:10
 variable_initial_cooling_speed  : 10		; Initial slow movement (mm/s) to solidify tip and cool string if formed
-variable_final_cooling_speed    : 60		; Fast movement (mm/s) Too fast: tip deformation on eject, Too Slow: long string/no separation
+variable_final_cooling_speed    : 50		; Fast movement (mm/s) Too fast: tip deformation on eject, Too Slow: long string/no separation
 variable_cooling_moves          : 4		; Number of back and forth cooling moves to make (2-4 is a good start)
 
 # Step 4 - Skinnydip
@@ -446,7 +446,7 @@ gcode: # Leave empty
 
 # Set speed as fast as you can without the extruder skipping steps. Note that
 # you can increase the extruder current for purging in mmu_parameters.cfg
-variable_extruder_purge_speed   : 2		; Speed in mm/s for purging
+variable_extruder_purge_speed   : 10		; Speed in mm/s for purging
 
 
 # CLIENT MACROS -----------------------------------------------------------
@@ -490,3 +490,4 @@ gcode: MMU_CHANGE_TOOL TOOL=1
 gcode: MMU_CHANGE_TOOL TOOL=2
 [gcode_macro T3]
 gcode: MMU_CHANGE_TOOL TOOL=3
+

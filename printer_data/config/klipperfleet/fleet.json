@@ -15,11 +15,12 @@
         "use_dfu_exit": false
     },
     {
-        "name": "QIDI MMU",
+        "name": "QIDI Box",
         "id": "/dev/serial/by-id/usb-Klipper_stm32f401xc_680043001551353035333335-if00",
         "profile": "qidi_mmu",
         "method": "serial",
         "interface": "can0",
+        "baudrate": 250000,
         "notes": "",
         "is_katapult": true,
         "is_bridge": false,
@@ -27,7 +28,8 @@
         "magic_baud_tested": false,
         "use_magic_baud": false,
         "dfu_exit_tested": false,
-        "use_dfu_exit": false
+        "use_dfu_exit": false,
+        "exclude_from_batch": false
     },
     {
         "name": "ToqueCAN",
@@ -62,7 +64,7 @@
         "use_dfu_exit": false
     },
     {
-        "name": "QIDI toolhead",
+        "name": "QIDI Toolhead",
         "id": "/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0",
         "profile": "qidi_toolhead",
         "method": "serial",
@@ -76,9 +78,6 @@
         "use_magic_baud": false,
         "dfu_exit_tested": false,
         "use_dfu_exit": false,
-        "exclude_from_batch": false,
-        "last_flashed": "2026-02-03 10:16:46",
-        "flashed_version": "v2026.01.00-1-g10f1d9da-dirty",
-        "flashed_commit": "10f1d9da803f"
+        "exclude_from_batch": false
     }
 ]

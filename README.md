@@ -6,6 +6,8 @@ These modifications are for experienced users. If you are not comfortable with a
 
 **ALSO NOTE: YOUR OEM SCREEN AND QIDI BOX WILL NOT WORK AFTER FOLLOWING THESE STEPS**
 
+*EDIT: Compatible with QIDI Box if you use the BunnyBox modification of Happy Hare (as of 3/24/26)*
+
 You can opt to replace the screen and move to a KlipperScreen setup to get a functioning display.
 
 ---

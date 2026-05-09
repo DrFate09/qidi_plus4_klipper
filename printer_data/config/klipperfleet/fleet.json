@@ -12,7 +12,10 @@
         "magic_baud_tested": false,
         "use_magic_baud": false,
         "dfu_exit_tested": false,
-        "use_dfu_exit": false
+        "use_dfu_exit": false,
+        "last_flashed": "2026-04-07 16:46:43",
+        "flashed_version": "v2026.02.00-6-g9500bd61-dirty",
+        "flashed_commit": "9500bd614686"
     },
     {
         "name": "QIDI Box",

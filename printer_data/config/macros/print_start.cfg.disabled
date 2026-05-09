@@ -1,0 +1,137 @@
+# Excute when start printing, prior to gcode file
+[gcode_macro PRINT_START]
+gcode:
+    SET_PIN PIN=caselight VALUE=1
+    BED_MESH_CLEAR
+    SET_GCODE_OFFSET Z=0
+    {% set BED = params.BED|int %}
+    {% set HOTEND = params.HOTEND|int %}
+    {% set PURGE = params.PURGE|int %}
+    {% set PEI_WIPE = params.PEI_WIPE|int %}
+    {% set CHAMBER = params.CHAMBER|default(0)|int %}
+    {% set MATERIAL = params.MATERIAL|default(ABS)|int %}
+    {% set beacontemp = printer.configfile.settings['beacon'].contact_max_hotend_temperature|int %}
+    {% set probetemp = beacontemp - 10 %}
+    
+    _SET_MPC_MATERIAL MATERIAL={params.MATERIAL}
+
+    # Turn off all fans
+    M106 P2 S0
+    M106 P3 S0
+
+    # Set initial fan speed to 255 (full speed)
+    #M106 S255
+
+    # Start heating the bed and chamber if needed
+    #HEAT_SOAK TARGET={BED}
+    # {% if BED > 0 %}
+    #     M140 S{BED}
+    # {% endif %}
+    {% if CHAMBER > 0 %}
+        M141 S{CHAMBER}
+    {% endif %}
+
+    # Home all axes
+    G28
+
+    # Clear chamber temperature if it was not set
+    {% if CHAMBER == 0 %}
+        M141 S0
+    {% endif %}
+
+    # # Prime the nozzle
+    # CLEAN_NOZZLE HOTEND={HOTEND} PURGE={PURGE} PEI_WIPE={PEI_WIPE}
+
+    # RESPOND MSG="Setting temp to {probetemp}"
+    # # Clear any previous extruder commands
+    # M104 S{probetemp}
+
+    # Wait for bed to reach target temperature
+    {% if BED > 0 %}
+         M190 S{BED}
+         RESPOND MSG="Soak for 5 minutes"
+         G4 P300000
+     {% endif %}
+
+    # Wait for chamber to reach target temperature
+    {% if CHAMBER > 0 %}
+        M141 S{CHAMBER}
+    {% endif %}
+
+    {% if printer.extruder.target > 180 %}
+        RESPOND MSG="Temperature is above 180C. Lowering to 175C."
+        M109 S175 ; Set extruder temp to 175C and WAIT until reached
+    {% else %}
+        RESPOND MSG="Temperature is 180C or below. Continuing operation."
+    {% endif %}
+
+    ################################################
+    # Beacon stuff
+    ################################################
+
+    # SKEW_PROFILE LOAD=Califlower                # Enable Califlower Skew Profile
+
+    # CLEAN_NOZZLE HOTEND={HOTEND} PURGE={PURGE} PEI_WIPE={PEI_WIPE}
+
+    # Home Z axis with proximity sensor on first run
+    G28 Z
+
+    # Adjust z-tilt using contact method
+    Z_TILT_ADJUST #PROBE_METHOD=contact
+    M400
+    
+    # Home and calibrate via nozzle after z-tilt adjust
+    G28 Z METHOD=contact CALIBRATE=1 # Calibrate via nozzle contact
+
+    # Calibrate the bed mesh with adaptive mode
+    BED_MESH_CALIBRATE RUNS=2 ADAPTIVE=1
+
+    # Allow for heat soak by setting a small Z offset
+    #SET_GCODE_OFFSET Z=0.06     # Add a little offset for hotend thermal expansion
+
+    # Apply nozzle thermal expansion offset
+    #_BEACON_SET_NOZZLE_TEMP_OFFSET
+
+    # Add an additional Z offset for a given material
+    _SET_FILAMENT_OFFSET MATERIAL={params.MATERIAL}
+
+    ################################################
+
+    # Move to a safe height and position
+    SMART_PARK
+    ## G0 Z15 F600
+    ## G0 X5 Y5 F6000
+
+    # Turn on chamber fan if required
+    {% if CHAMBER > 0 %}
+        M106 P3 S255
+    {% endif %}
+
+    # Wait for hotend to reach target temperature
+    M109 S{HOTEND}
+
+    # Set print acceleration
+    M204 S10000
+
+    # Ensure all temperatures are set correctly before starting the print
+    {% if BED > 0 %}
+        M140 S{BED}
+    {% endif %}
+    {% if CHAMBER > 0 %}
+        M141 S{CHAMBER}
+    {% endif %}
+    M109 S{HOTEND}
+
+    # Purge using a line from KAMP
+    M83  # Use relative positioning for extruder
+    G4 P3000  # Wait for 3 seconds
+    LINE_PURGE  # Perform a line purge to ensure good filament flow
+
+    # Start the print
+    SET_PRINT_STATS_INFO CURRENT_LAYER=1
+
+    
+[gcode_macro WIPIN]
+gcode:
+    # Prime the nozzle
+    CLEAN_NOZZLE HOTEND={HOTEND} PURGE={PURGE} PEI_WIPE={PEI_WIPE}

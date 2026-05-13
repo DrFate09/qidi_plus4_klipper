@@ -1,0 +1,4 @@
+Save touch calibration
+
+Modify /etc/udev/rules.d/51-touchscreen.rules:
+ACTION=="add", ATTRS{name}=="Goodix Capacitive TouchScreen", ENV{LIBINPUT_CALIBRATION_MATRIX}="0 1 0 -1 0 1 0 0 1"

@@ -1,0 +1,697 @@
+[include mmu/optional/client_macros.cfg]
+#[include macros/mafized_macro.cfg]
+#######################################
+# Plugins, Includes & Basic Setup
+#######################################
+[include plugins/*.cfg]
+
+[include moonraker_obico_macros.cfg]
+
+[include timelapse.cfg]
+
+[include KAMP_Settings.cfg]
+
+[include macros/*.cfg]
+
+[include gcode_macros.cfg]
+    
+[print_stats]
+
+[soak_my_bed]
+
+[duplicate_pin_override]
+pins:
+    
+[gcode_arcs]
+resolution: 0.5
+
+[exclude_object]
+
+[respond]
+
+[virtual_sdcard]
+path: /home/pi/printer_data/gcodes
+
+[display_status]
+
+[idle_timeout]
+timeout: 43200
+gcode:
+    {% if printer.mmu is defined and printer.mmu.drying_state[0] == 'active' %}
+      SET_HEATER_TEMPERATURE HEATER=extruder TARGET=0
+      SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET=0
+      SET_HEATER_TEMPERATURE HEATER=chamber TARGET=0
+    {% else %}
+      TURN_OFF_HEATERS
+      M84
+    {% endif %}
+
+[firmware_retraction]
+retract_length: 0.8
+retract_speed: 50
+unretract_extra_length: 0
+unretract_speed: 50
+
+#######################################
+# Happy Hare MMU
+#######################################
+[include bunnybox_macros.cfg] 
+[include mmu/base/*.cfg]
+# [include mmu/*.cfg]
+# [include mmu/addons/*.cfg]
+# [include mmu/optional/*.cfg]
+
+# [save_variables]
+# filename: ~/printer_data/config/variables.cfg
+
+#######################################
+# Klipper TMC Autotune
+#######################################
+[motor_constants qidi_xy_motors]
+resistance: 1.4
+inductance: 0.0026
+holding_torque: 0.41
+max_current: 1.5
+steps_per_revolution: 200
+
+[motor_constants qidi_z_motors]
+resistance: 2.0
+inductance: 0.0034
+holding_torque: 0.28
+max_current: 1.5
+steps_per_revolution: 200
+
+[motor_constants qidi_extruder_motors]
+resistance: 2.0
+inductance: 0.0013
+holding_torque: 0.1
+max_current: 1.0
+steps_per_revolution: 200
+
+#######################################
+# MCU Definitions
+#######################################
+[mcu]
+serial: /dev/serial/by-id/usb-Klipper_stm32f401xc_1F0034000950324257333720-if00
+restart_method: command
+#baud: 500000
+
+[mcu toolhead]
+serial: /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
+restart_method: command
+baud: 500000
+
+[mcu host]
+serial: /tmp/klipper_host_mcu
+
+#######################################
+# Basic Printer Kinematics
+#######################################
+[printer]
+kinematics: corexy
+max_velocity: 600
+max_accel: 20000
+minimum_cruise_ratio: 0.5
+max_z_velocity: 20
+max_z_accel: 500
+square_corner_velocity: 5
+
+[temperature_sensor mainboard_mcu]
+sensor_type: temperature_mcu
+sensor_mcu: mcu
+
+[temperature_sensor toolhead_mcu]
+sensor_type: temperature_mcu
+sensor_mcu: toolhead
+
+[temperature_sensor raspberry_pi]
+sensor_type: temperature_host
+min_temp: 10
+max_temp: 100
+
+#######################################
+# Bed Screws
+#######################################
+[bed_screws]
+screw1: 21, 24
+screw1_name: Front left
+screw2: 278, 24
+screw2_name: Front right
+screw3: 278, 283
+screw3_name: Back right
+screw4: 21, 283
+screw4_name: Back left
+speed: 150
+
+[screws_tilt_adjust]
+screw1: 21, 24
+screw1_name: Front left
+screw2: 278, 24
+screw2_name: Front right
+screw3: 278, 283
+screw3_name: Back right
+screw4: 21, 283
+screw4_name: Back left
+horizontal_move_z: 10
+screw_thread: CW-M4
+speed: 150
+
+# [bed_screws]
+# screw1: 25, 21
+# screw1_name: Front left
+# screw2: 285, 21
+# screw2_name: Front right
+# screw3: 285, 281
+# screw3_name: Back right
+# screw4: 25, 281
+# screw4_name: Back left
+# speed: 150
+
+# [screws_tilt_adjust]
+# screw1: 25, 21
+# screw1_name: Front left
+# screw2: 285, 21
+# screw2_name: Front right
+# screw3: 285, 281
+# screw3_name: Back right
+# screw4: 25, 281
+# screw4_name: Back left
+# screw_thread: CW-M4
+# speed: 150
+
+#######################################
+#   Bed Mesh
+#######################################
+[bed_mesh]
+speed: 300
+horizontal_move_z: 2
+zero_reference_position: 152.5, 152.5
+mesh_min: 30, 30
+mesh_max: 270, 270
+probe_count: 14, 14
+algorithm: bicubic
+bicubic_tension: 0.3
+mesh_pps: 2, 2
+fade_start: 1
+fade_end: 10
+split_delta_z: 0.01
+move_check_distance: 4
+
+#######################################
+#   Z Tilt and Screws
+#######################################
+[z_tilt]
+z_positions:
+    -17.5,152.5
+    335.7,152.5
+points:
+    40, 171.3           # Assumes we are using the stew675 beacon mount offsets of X=0, Y=-18.8
+    265, 171.3          # Assumes we are using the stew675 beacon mount offsets of X=0, Y=-18.8
+speed: 200
+horizontal_move_z: 5
+retries: 5
+retry_tolerance: 0.006
+
+#######################################
+# Extruder Settings
+#######################################
+[extruder]
+step_pin: toolhead:PB9
+dir_pin: toolhead:PB8
+enable_pin: !toolhead:PC15
+rotation_distance: 53.7
+gear_ratio: 1517:170
+microsteps: 16
+full_steps_per_rotation: 200
+nozzle_diameter: 0.500
+min_temp: 0
+max_temp: 370
+min_extrude_temp: 175
+smooth_time: 0.000001
+heater_pin: toolhead:PB3
+sensor_type: MAX6675
+sensor_pin: toolhead:PB12
+spi_speed: 100000
+spi_software_sclk_pin: toolhead:PB13
+spi_software_mosi_pin: toolhead:PA11
+spi_software_miso_pin: toolhead:PB14
+max_power: 1 
+
+pressure_advance: 0.032
+pressure_advance_smooth_time: 0.03
+max_extrude_cross_section: 500
+instantaneous_corner_velocity: 10
+max_extrude_only_distance: 1000
+max_extrude_only_velocity: 5000
+max_extrude_only_accel: 5000
+step_pulse_duration: 0.000002
+
+#control: mpc
+heater_power: 86 
+cooling_fan: fan_generic cooling_fan
+ambient_temp_sensor: temperature_sensor beacon_coil
+filament_diameter: 1.75
+filament_density: 1.20
+filament_heat_capacity: 1.80 
+
+[tmc2209 extruder]
+uart_pin: toolhead:PC13
+interpolate: false
+run_current: 0.714
+stealthchop_threshold: 0
+sense_resistor: 0.11
+
+[autotune_tmc extruder]
+motor: qidi_extruder_motors
+tuning_goal: performance
+
+#######################################
+# Resonance Testing
+#######################################
+# [adxl345]
+# cs_pin: toolhead:PA4
+# spi_software_sclk_pin: toolhead:PA5
+# spi_software_mosi_pin: toolhead:PA7
+# spi_software_miso_pin: toolhead:PA6
+# axes_map: -x, z, -y
+
+# [resonance_tester]
+# accel_chip: adxl345
+# probe_points:
+#    150, 150, 10
+
+# [resonance_tester]
+# accel_per_hz: 150
+# max_smoothing: 0.5
+
+#[input_shaper]
+#enabled_extruders: extruder
+
+#######################################
+# Stepper Configs for XYZ
+#######################################
+[stepper_x]
+step_pin: PB4
+dir_pin: !PB3
+enable_pin: !PB5
+microsteps: 32
+rotation_distance: 38.82
+full_steps_per_rotation: 200 # set to 400 for 0.9 degree stepper
+endstop_pin: tmc2240_stepper_x:virtual_endstop
+position_min: -1.5
+position_endstop: -1.5
+position_max: 307
+homing_speed: 50
+homing_retract_dist: 20
+homing_positive_dir: false
+step_pulse_duration: 0.0000001
+
+[tmc2240 stepper_x]
+cs_pin: PD2
+spi_software_sclk_pin: PA5
+spi_software_mosi_pin: PA7
+spi_software_miso_pin: PA6
+spi_speed: 200000
+run_current: 1.07
+home_current: 0.59
+## home_current: 0.74
+interpolate: true
+stealthchop_threshold: 0
+diag0_pin: !PB8
+driver_SGT: 1
+rref: 12000
+
+[autotune_tmc stepper_x]
+motor: qidi_xy_motors
+tuning_goal: performance
+
+[stepper_y]
+step_pin: PC14
+dir_pin: !PC13
+enable_pin: !PC15
+microsteps: 32
+rotation_distance: 38.82
+full_steps_per_rotation: 200
+endstop_pin: tmc2240_stepper_y:virtual_endstop
+position_min: -3
+position_endstop: -3
+position_max: 325
+homing_speed: 50
+homing_retract_dist: 20
+homing_positive_dir: false
+step_pulse_duration: 0.0000001
+
+[tmc2240 stepper_y]
+cs_pin: PB9
+spi_software_sclk_pin: PA5
+spi_software_mosi_pin: PA7
+spi_software_miso_pin: PA6
+spi_speed: 200000
+run_current: 1.07
+home_current: 0.48
+## home_current: 0.74
+interpolate: true
+stealthchop_threshold: 0
+diag0_pin: !PC0
+driver_SGT: 1
+rref: 12000
+
+[autotune_tmc stepper_y]
+motor: qidi_xy_motors
+tuning_goal: performance
+
+[stepper_z]
+step_pin: PB1
+dir_pin: PB6
+enable_pin:!PB0
+microsteps: 128
+rotation_distance: 4
+full_steps_per_rotation: 200
+endstop_pin: probe:z_virtual_endstop
+position_max: 287
+position_min: -4
+homing_speed: 10
+second_homing_speed: 5
+homing_retract_dist: 0
+homing_positive_dir: false
+
+[tmc2209 stepper_z]
+uart_pin: PB7
+run_current: 1.07
+interpolate: false
+stealthchop_threshold: 999999
+diag_pin: ^PA13
+driver_SGTHRS: 100
+sense_resistor: 0.11
+
+[autotune_tmc stepper_z]
+motor: qidi_z_motors
+tuning_goal: silent
+
+[stepper_z1]
+step_pin: PC10
+dir_pin: PA15
+enable_pin: !PC11
+microsteps: 128
+rotation_distance: 4
+full_steps_per_rotation: 200
+
+[tmc2209 stepper_z1]
+uart_pin: PC5
+run_current: 1.07
+interpolate: false
+stealthchop_threshold: 999999
+diag_pin: ^PC12
+driver_SGTHRS: 100
+sense_resistor: 0.11
+
+[autotune_tmc stepper_z1]
+motor: qidi_z_motors
+tuning_goal: silent
+
+#######################################
+# Heaters
+#######################################
+[heater_bed]
+heater_pin: PB10
+sensor_type: NTC 100K MGB18-104F39050L32
+sensor_pin: PA0
+max_power: 1.0
+pwm_cycle_time: 0.001
+min_temp: 0
+max_temp: 125
+
+[heater_generic chamber]
+heater_pin: PC8
+max_power: 0.4
+sensor_type: temperature_combined
+sensor_list: temperature_sensor toolhead_mcu, temperature_sensor chamber_probe
+combination_method: mean
+maximum_deviation: 70
+
+pwm_cycle_time:0.02088            # Reduced to 0.02088 seconds to reduce flicker (within 0.3 limit)
+control = pid
+pid_Kp=45
+pid_Ki=0.1
+pid_Kd=5000
+#pid_Kp=63.418 
+#pid_Ki=1.342 
+#pid_Kd=749.125
+min_temp: -100
+max_temp: 80
+
+[temperature_sensor chamber_probe]
+sensor_type: NTC 100K MGB18-104F39050L32
+sensor_pin: PA1
+
+[verify_heater chamber]
+max_error: 400
+check_gain_time: 600
+hysteresis: 5
+heating_gain: 2
+
+[temperature_sensor chamber_thermal_protection_sensor]
+sensor_type: NTC 100K MGB18-104F39050L32
+sensor_pin: PC2
+min_temp: -100
+max_temp: 140
+
+[verify_heater extruder]
+max_error: 120
+check_gain_time: 20
+hysteresis: 5
+heating_gain: 1
+
+[verify_heater heater_bed]
+max_error: 200
+check_gain_time: 60
+hysteresis: 10
+heating_gain: 1
+
+#######################################
+# Fans
+#######################################
+[fan_generic cooling_fan]
+pin: toolhead:PA8
+max_power: 1.0
+shutdown_speed: 0
+cycle_time: 0.010
+hardware_pwm: false
+kick_start_time: 0.100
+tachometer_pin: toolhead:PA9
+tachometer_ppr: 2
+tachometer_poll_interval: 0.0015
+
+[fan_generic auxiliary_cooling_fan]
+pin: PA8
+cycle_time: 0.0100
+hardware_pwm: false
+kick_start_time: 0.100
+
+[fan_generic exhaust_fan]
+pin: PC9
+cycle_time: 0.0100
+hardware_pwm: false
+kick_start_time: 0.100
+
+[heater_fan hotend_fan]
+pin: toolhead:PB5
+max_power: 1.0
+shutdown_speed: 1.0
+kick_start_time: 0.5
+heater: extruder
+heater_temp: 50.0
+fan_speed: 1.0
+tachometer_pin: ^toolhead:PA10
+
+[heater_fan chamber_fan]
+pin: PA4
+max_power: 1.0
+kick_start_time: 0.5
+heater: chamber
+fan_speed: 1.0
+
+[controller_fan board_fan]
+pin: PC4
+max_power: 1.0
+fan_speed: 1
+kick_start_time: 0
+stepper: stepper_x
+
+# [temperature_fan board_fan]
+# pin: PC4
+# max_power: 1.0
+# shutdown_speed: 1.0
+# cycle_time: 0.01
+# min_power: 0
+# sensor_type: temperature_host
+# control: pid
+# pid_deriv_time: 2.0
+# pid_Kp: 5
+# pid_Ki: 2
+# pid_Kd: 5
+# target_temp: 50
+# min_speed: 0.3
+# max_speed: 1.0
+# min_temp: 0
+# max_temp: 100
+
+#[heater_fan hotend_fan2]
+#pin: toolhead:PB4
+#max_power: 1.0
+#shutdown_speed: 1.0
+#kick_start_time: 0.5
+#heater: extruder
+#heater_temp: 50.0
+#fan_speed: 1.0
+
+#[heater_fan hotend_fan3]
+#pin: toolhead:PB10
+#max_power: 1.0
+#shutdown_speed: 1.0
+#kick_start_time: 0.5
+#heater: extruder
+#heater_temp: 50.0
+#fan_speed: 1.0
+
+# cooling fan for @spookniks mod
+# [fan_generic cooling_fan]
+# pin: toolhead:PB10
+# max_power: 1.0
+# shutdown_speed: 0
+# cycle_time: 0.010
+# hardware_pwm: false
+# kick_start_time: 0.100
+
+#######################################
+# Filament Sensors
+#######################################
+# [filament_switch_sensor filament]
+# switch_pin: PC3
+# pause_on_runout: True
+# runout_gcode:
+#     M118 Filament tangle detected
+# event_delay: 3.0
+# pause_delay: 0.5
+
+# [filament_switch_sensor Toolhead]
+# switch_pin: ^toolhead:PA3
+# pause_on_runout: True
+# runout_gcode:
+#     PAUSE
+#     M118 Filament run out
+
+# [hall_filament_width_sensor]
+# adc1: toolhead:PA2
+# adc2: toolhead:PA3
+# cal_dia1: 1.50
+# cal_dia2: 2.00
+# raw_dia1: 14197
+# raw_dia2: 15058
+# default_nominal_filament_diameter: 1.75
+# max_difference: 0 # 0.200
+# measurement_delay: 50
+# enable: false
+# measurement_interval: 10
+# logging: false
+# pause_on_runout: false
+# min_diameter: 0.2
+# use_current_dia_while_delay: false
+# pause_on_runout: true
+# runout_gcode:
+#            RESET_FILAMENT_WIDTH_SENSOR
+#            M118 Filament run out
+# event_delay: 3.0
+# pause_delay: 0.5
+
+#######################################
+ # Miscellaneous Outputs
+#######################################
+[output_pin caselight]
+pin: PC7
+pwm: false
+shutdown_value: 1
+value: 1
+
+[output_pin buzzer]
+pin: PA2
+pwm: false
+shutdown_value:0
+value:0
+
+# [output_pin ctlyd]
+# pin: PA14
+# pwm: false
+# shutdown_value: 0
+# value: 0
+
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+#*# [input_shaper]
+#*# shaper_type_x = mzv
+#*# shaper_freq_x = 51.4
+#*# shaper_type_y = mzv
+#*# shaper_freq_y = 40.0
+#*# damping_ratio_x = 0.049
+#*# damping_ratio_y = 0.072
+#*#
+#*# [beacon model default]
+#*# model_coef = 1.4627333646225602,
+#*# 	  1.7974614854002613,
+#*# 	  0.7840303308945645,
+#*# 	  0.3019545701755882,
+#*# 	  0.24724508267746562,
+#*# 	  0.5907946415975422,
+#*# 	  0.15855727470550746,
+#*# 	  -0.46047691704880217,
+#*# 	  -0.053981021064070496,
+#*# 	  0.17359205397103497
+#*# model_domain = 1.8080503965550823e-07,1.9275076646902798e-07
+#*# model_range = 0.200052,5.000052
+#*# model_temp = 23.608097
+#*# model_offset = 0.00000
+#*#
+#*# [heater_bed]
+#*# pid_version = 1
+#*# pid_target = 100.00
+#*# pid_tolerance = 0.0200
+#*# control = pid
+#*# pid_kp = 71.249
+#*# pid_ki = 0.690
+#*# pid_kd = 1840.009
+#*#
+#*# [bed_mesh default]
+#*# version = 1
+#*# points =
+#*# 	  0.201082, 0.194727, 0.180644, 0.154414, 0.145753, 0.129920, 0.121238, 0.106231, 0.091346, 0.075583, 0.055571, 0.033607, 0.016158, 0.001572
+#*# 	  0.196096, 0.179206, 0.155111, 0.139742, 0.124771, 0.112248, 0.107887, 0.105147, 0.078648, 0.054243, 0.036526, 0.018094, -0.005161, -0.026819
+#*# 	  0.183677, 0.167060, 0.140493, 0.131732, 0.111765, 0.096563, 0.089235, 0.077829, 0.054147, 0.032154, 0.009403, -0.008573, -0.032825, -0.054329
+#*# 	  0.171624, 0.157537, 0.136648, 0.114126, 0.093138, 0.079243, 0.066284, 0.053615, 0.037243, 0.014787, -0.012468, -0.028329, -0.051602, -0.073823
+#*# 	  0.165568, 0.152981, 0.131055, 0.110888, 0.090983, 0.075088, 0.063946, 0.045022, 0.027254, 0.001386, -0.030686, -0.051615, -0.070429, -0.098429
+#*# 	  0.156824, 0.143631, 0.123682, 0.105127, 0.087336, 0.067476, 0.045393, 0.030756, 0.009586, -0.023813, -0.054358, -0.073361, -0.092546, -0.124631
+#*# 	  0.145164, 0.128042, 0.111606, 0.096000, 0.070329, 0.037353, 0.025487, 0.009908, -0.018707, -0.054861, -0.081703, -0.095979, -0.122758, -0.152519
+#*# 	  0.121669, 0.104486, 0.093298, 0.073648, 0.043441, 0.012042, 0.000703, -0.007769, -0.031883, -0.061845, -0.083476, -0.106476, -0.144706, -0.180469
+#*# 	  0.109997, 0.096017, 0.080597, 0.053260, 0.021188, -0.005808, -0.016180, -0.033454, -0.054990, -0.080989, -0.098495, -0.124207, -0.163157, -0.195405
+#*# 	  0.097313, 0.078421, 0.058213, 0.030522, -0.000888, -0.025042, -0.039752, -0.064297, -0.091275, -0.111049, -0.128725, -0.147498, -0.181889, -0.207433
+#*# 	  0.078132, 0.057177, 0.032418, 0.002099, -0.025375, -0.051097, -0.070413, -0.096780, -0.119125, -0.135276, -0.154604, -0.180511, -0.191229, -0.207827
+#*# 	  0.051993, 0.030116, 0.003620, -0.030851, -0.050613, -0.076085, -0.101882, -0.123405, -0.140640, -0.160354, -0.183602, -0.208763, -0.207774, -0.214034
+#*# 	  0.031695, 0.016047, -0.013342, -0.034793, -0.059453, -0.089382, -0.118373, -0.136517, -0.148038, -0.168421, -0.198445, -0.221087, -0.229789, -0.252314
+#*# 	  0.022870, 0.001356, -0.020085, -0.039840, -0.063691, -0.099047, -0.121508, -0.137665, -0.157279, -0.180842, -0.201617, -0.227579, -0.235079, -0.276758
+#*# x_count = 14
+#*# y_count = 14
+#*# mesh_x_pps = 2
+#*# mesh_y_pps = 2
+#*# algo = bicubic
+#*# tension = 0.3
+#*# min_x = 30.0
+#*# max_x = 270.0
+#*# min_y = 30.0
+#*# max_y = 270.0
+#*#
+#*# [extruder]
+#*# control = mpc
+#*# block_heat_capacity = 12.1413
+#*# sensor_responsiveness = 0.101211
+#*# ambient_transfer = 0.107488
+#*# fan_ambient_transfer = 0.107488, 0.104524, 0.122557, 0.130347, 0.130849, 0.142026, 0.149905

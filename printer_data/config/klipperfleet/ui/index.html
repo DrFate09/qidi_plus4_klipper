@@ -1,0 +1,1388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KlipperFleet</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #121212; color: #f0f0f0; }
+        .kconfig-item { margin-left: 1.5rem; }
+        .kconfig-menu { border-left: 1px solid #333; padding-left: 1rem; }
+        .mainsail-card { background-color: #1e1e1e; border: 1px solid #333; }
+        .mainsail-btn { background-color: #3b82f6; transition: background-color 0.2s; }
+        .mainsail-btn:hover { background-color: #2563eb; }
+        .mainsail-input { background-color: #0f0f0f; border: 1px solid #444; color: #f0f0f0; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #121212; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+    </style>
+</head>
+<body class="font-sans">
+    <div id="app" class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 mainsail-card border-r border-gray-800 flex flex-col">
+            <div class="p-6 border-b border-gray-800">
+                <h1 class="text-2xl font-bold text-blue-500"><i class="fas fa-ship mr-2"></i>KlipperFleet</h1>
+            </div>
+            <nav class="flex-1 p-4 space-y-2">
+                <button @click="view = 'dashboard'" :class="view === 'dashboard' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'" class="w-full text-left p-3 rounded flex items-center transition-colors">
+                    <i class="fas fa-tachometer-alt mr-3"></i> Dashboard
+                </button>
+                <button @click="view = 'configurator'" :class="view === 'configurator' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'" class="w-full text-left p-3 rounded flex items-center transition-colors">
+                    <i class="fas fa-cog mr-3"></i> Configurator
+                </button>
+                <button @click="view = 'fleet'" :class="view === 'fleet' ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white'" class="w-full text-left p-3 rounded flex items-center transition-colors">
+                    <i class="fas fa-microchip mr-3"></i> Fleet Manager
+                </button>
+            </nav>
+            <div class="p-4 border-t border-gray-800 space-y-2">
+                <button @click="selfUpdate" :disabled="updating" class="w-full text-left p-2 rounded flex items-center text-xs text-gray-300 hover:bg-gray-800 hover:text-white transition-colors">
+                    <i class="fas fa-sync-alt mr-2" :class="updating ? 'fa-spin' : ''"></i> 
+                    {{ updating ? 'Updating...' : 'Update KlipperFleet' }}
+                </button>
+                <div v-if="!isKlipperKconfiglib" class="p-2 bg-red-900/30 border border-red-800/50 rounded text-[9px] text-red-400 leading-tight">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    Using system kconfiglib. Please click Update to switch to Klipper's version for full compatibility.
+                </div>
+                <div class="text-[10px] text-gray-500">v1.0.9-alpha</div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- Header -->
+            <header class="h-16 mainsail-card border-b border-gray-800 flex items-center justify-between px-8">
+                <div class="flex items-center space-x-4">
+                    <a :href="mainsailUrl" class="text-gray-400 hover:text-white flex items-center text-sm transition-colors mr-4 border-r border-gray-800 pr-4">
+                        <i class="fas fa-arrow-left mr-2"></i> Return to Mainsail
+                    </a>
+                    <h2 class="text-xl font-semibold capitalize">{{ view }}</h2>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span v-if="building || flashing" class="flex items-center text-orange-400 text-sm">
+                        <i class="fas fa-circle-notch fa-spin mr-2"></i> Processing...
+                    </span>
+                    <span v-if="querying && !building && !flashing" class="flex items-center text-blue-400 text-sm">
+                        <i class="fas fa-search fa-spin mr-2"></i> Querying Bus...
+                    </span>
+                    <div v-if="view === 'dashboard'" class="flex items-center space-x-2">
+                        <button @click="runBatch('build-all')" :disabled="building || flashing" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-[10px] font-bold disabled:opacity-50 uppercase">
+                            Build All
+                        </button>
+                        <button @click="runBatch('flash-all')" :disabled="building || flashing" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-[10px] font-bold disabled:opacity-50 uppercase">
+                            Flash All
+                        </button>
+                        <button @click="runBatch('build-flash-ready')" :disabled="building || flashing" class="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1 rounded text-[10px] font-bold disabled:opacity-50 uppercase">
+                            Build & Flash Ready
+                        </button>
+                        <button @click="runBatch('build-flash-all')" :disabled="building || flashing" class="bg-red-700 hover:bg-red-800 text-white px-3 py-1 rounded text-[10px] font-bold disabled:opacity-50 uppercase">
+                            Build & Flash All
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Service Status Bar -->
+            <div class="bg-gray-900/50 border-b border-gray-800 px-8 py-2 flex items-center justify-between text-[10px] uppercase font-bold tracking-wider">
+                <div class="flex items-center space-x-6">
+                    <span class="text-gray-500">Services:</span>
+                    <div v-for="svc in services" :key="svc.name" class="flex items-center space-x-2">
+                        <span :class="svc.active ? 'text-green-500' : 'text-red-500'">
+                            <i class="fas fa-circle text-[6px] mr-1"></i>
+                            {{ svc.name.replace('.service', '') }}
+                        </span>
+                    </div>
+                    <span v-if="services.length === 0" class="text-gray-600 italic">No services detected</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button @click="manageServices('start')" class="text-gray-400 hover:text-green-500 transition-colors flex items-center">
+                        <i class="fas fa-play mr-1"></i> Start All
+                    </button>
+                    <button @click="manageServices('stop')" class="text-gray-400 hover:text-red-500 transition-colors flex items-center">
+                        <i class="fas fa-stop mr-1"></i> Stop All
+                    </button>
+                    <button @click="manageServices('restart')" class="text-gray-400 hover:text-blue-500 transition-colors flex items-center">
+                        <i class="fas fa-sync-alt mr-1"></i> Restart All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content Area -->
+            <div class="flex-1 flex flex-col min-h-0 p-8">
+                
+                <!-- Alpha Warning -->
+                <div class="mb-6 bg-orange-900/20 border border-orange-500/30 rounded-lg p-4 flex items-center space-x-4 text-orange-200">
+                    <i class="fas fa-vial text-xl"></i>
+                    <div class="text-xs">
+                        <p class="font-bold uppercase tracking-wider mb-1">Alpha Version</p>
+                        <p class="opacity-80">Tested on CAN, Linux, and STM32 DFU devices. Kalico/Fluidd are currently unsupported.</p>
+                        <p class="opacity-80 mt-1">Hey you! <a href="https://github.com/JohnBaumb/KlipperFleet/issues" target="_blank" class="underline hover:text-orange-100 transition-colors">Bug reports</a> and <a href="https://github.com/JohnBaumb/KlipperFleet/discussions/2" target="_blank" class="underline hover:text-orange-100 transition-colors">Hardware Compatibility Issues / Success Stories</a> are welcome!</p>
+                    </div>
+                </div>
+
+                <!-- Dashboard View -->
+                <div v-if="view === 'dashboard'" class="flex-1 flex flex-col min-h-0 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 flex-none overflow-y-auto max-h-[60vh] pr-2">
+                        <div v-for="dev in fleet" :key="dev.id" class="mainsail-card rounded-lg p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex-1 min-w-0 mr-2">
+                                    <h3 class="text-lg font-bold text-white truncate" :title="dev.name">{{ dev.name }}</h3>
+                                    <div class="flex items-center space-x-2">
+                                        <span class="flex items-center text-[10px] uppercase font-bold" :class="statusColor(dev.status)">
+                                            <i class="fas fa-circle text-[6px] mr-1"></i> {{ formatStatus(dev.status) }}
+                                        </span>
+                                        <button v-if="dev.method === 'can' || dev.method === 'serial'" 
+                                                @click="rebootDevice(dev.id, (dev.status === 'ready' || dev.status === 'dfu') ? 'regular' : 'katapult', dev.method)" 
+                                                :disabled="flashing"
+                                                class="transition-colors"
+                                                :class="(dev.status === 'ready' || dev.status === 'dfu') ? 'text-blue-400 hover:text-blue-300' : 'text-gray-500 hover:text-blue-400'"
+                                                :title="(dev.status === 'ready' || dev.status === 'dfu') ? 'Restart to Firmware' : (dev.method === 'serial' ? ('Reboot to DFU' + (dev.status === 'service' ? ' (stops services, device disconnects briefly)' : '')) : 'Reboot to Katapult')">
+                                            <i class="fas fa-power-off text-[8px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <span class="px-2 py-1 rounded text-[10px] font-bold uppercase" :class="{'bg-purple-900 text-purple-100': dev.method === 'can' && dev.status !== 'dfu', 'bg-blue-900 text-blue-100': dev.method === 'serial' && dev.status !== 'dfu', 'bg-orange-900 text-orange-100': dev.method === 'dfu' || dev.status === 'dfu', 'bg-green-900 text-green-100': dev.method === 'linux'}">
+                                    {{ dev.status === 'dfu' ? 'dfu' : dev.method }}
+                                </span>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-300">Profile:</span>
+                                    <span class="font-medium text-blue-400">{{ dev.profile || 'None' }}</span>
+                                </div>
+                                <div v-if="dev.notes" class="text-[10px] text-gray-200 bg-black/40 p-2 rounded italic whitespace-pre-wrap break-words border border-gray-800" v-html="formatNotes(dev.notes)">
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="flex space-x-2">
+                                        <button @click="quickBuild(dev)" :disabled="building || flashing" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-[10px] font-bold disabled:opacity-50 uppercase">
+                                            Build
+                                        </button>
+                                        <button @click="quickFlashOnly(dev)" :disabled="building || flashing" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-1.5 rounded text-[10px] font-bold disabled:opacity-50 uppercase">
+                                            Flash
+                                        </button>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button @click="quickFlash(dev)" :disabled="building || flashing" class="flex-1 mainsail-btn text-white py-2 rounded text-sm font-bold disabled:opacity-50">
+                                            Build & Flash
+                                        </button>
+                                        <button v-if="dev.profile" @click="buildAndDownload(dev.profile)" :disabled="building || flashing" class="bg-gray-700 hover:bg-gray-600 text-white p-2 rounded flex items-center justify-center" title="Build & Download Binary">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Build Logs (Always visible on dashboard) -->
+                    <div class="mainsail-card rounded-lg overflow-hidden flex-1 flex flex-col min-h-[200px]">
+                        <div class="bg-gray-800 px-4 py-2 text-xs font-bold flex justify-between items-center">
+                            <span>BUILD & FLASH LOGS</span>
+                            <div class="flex items-center space-x-4">
+                                <button v-if="currentTaskId" @click="cancelTask" class="text-red-500 hover:text-red-400 font-bold">Cancel</button>
+                                <button @click="buildLogs = ''" class="text-gray-500 hover:text-white">Clear</button>
+                            </div>
+                        </div>
+                        <div class="p-4 font-mono text-xs text-green-400 flex-1 overflow-y-auto bg-black whitespace-pre-wrap" id="log-container">
+                            {{ buildLogs }}
+                            <div v-if="building || flashing" class="inline-block animate-pulse">_</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configurator View -->
+                <div v-if="view === 'configurator'" class="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-4 gap-8 pr-2">
+                    <div class="lg:col-span-3 mainsail-card rounded-lg p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <div class="flex items-center space-x-2">
+                                <button @click="newProfile" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm font-bold flex items-center transition-colors" title="Start New Profile">
+                                    <i class="fas fa-file-alt mr-2"></i> New
+                                </button>
+                                <div class="h-8 w-px bg-gray-800 mx-2"></div>
+                                <select v-model="selectedProfile" @change="loadProfile" class="mainsail-input p-2 rounded text-sm w-48">
+                                    <option value="" disabled>-- Select Profile --</option>
+                                    <option v-for="p in profiles" :key="p" :value="p">{{ p }}</option>
+                                </select>
+                                <button @click="saveProfile" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold flex items-center transition-colors">
+                                    <i class="fas fa-save mr-2"></i> Save
+                                </button>
+                                <button v-if="selectedProfile" @click="saveProfileAs" class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded text-sm font-bold transition-colors" title="Save As...">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <button v-if="selectedProfile" @click="deleteProfile" class="bg-red-900/50 hover:bg-red-700 text-red-200 px-3 py-2 rounded text-sm font-bold transition-colors" title="Delete Profile">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                            <button v-if="selectedProfile" @click="startBuild()" :disabled="building" class="mainsail-btn text-white px-4 py-2 rounded text-sm font-bold disabled:opacity-50">
+                                <i class="fas fa-hammer mr-2"></i> Build
+                            </button>
+                        </div>
+
+                        <div v-if="loading" class="text-center py-20">
+                            <i class="fas fa-circle-notch fa-spin text-4xl text-blue-500 mb-4"></i>
+                            <p class="text-gray-500">Parsing Kconfig source...</p>
+                        </div>
+                        <div v-else-if="error" class="text-center py-20 text-red-400">
+                            <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                            <p class="font-bold">Error Loading Configurator</p>
+                            <p class="text-sm opacity-75">{{ error }}</p>
+                            <div class="flex justify-center space-x-4 mt-4">
+                                <button @click="fetchTree()" class="text-blue-400 hover:underline">Try Again</button>
+                                <button v-if="error.includes('not found')" @click="createMissingProfile" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold">
+                                    Create Profile
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="space-y-2">
+                            <div v-for="item in configTree" :key="item.name || item.prompt">
+                                <kconfig-node :node="item" :show-raw-symbol-names="showRawSymbolNames" @update="updateValue"></kconfig-node>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="mainsail-card rounded-lg p-4">
+                            <h3 class="font-bold mb-4 text-sm border-b border-gray-800 pb-2">PROFILE INFO</h3>
+                            <div class="space-y-2 text-xs">
+                                <div class="flex justify-between"><span class="text-gray-500">Name:</span> <span>{{ selectedProfile || 'Unsaved' }}</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Modified:</span> <span>{{ Object.keys(modifiedValues).length }} options</span></div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-t border-gray-800">
+                                <label class="flex items-center space-x-2 cursor-pointer group" title="Show or hide the raw Kconfig symbol names (e.g. USB_VENDOR_ID).">
+                                    <input type="checkbox" v-model="showRawSymbolNames" class="h-3 w-3 rounded border-gray-700 bg-gray-900 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-[10px] text-gray-400 group-hover:text-gray-200 uppercase font-bold">Show Raw Symbol Names</span>
+                                </label>
+                                <label class="flex items-center space-x-2 cursor-pointer group mt-2" title="Show optional features that are normally hidden (e.g. for low-memory MCUs).">
+                                    <input type="checkbox" v-model="showOptionalFeatures" class="h-3 w-3 rounded border-gray-700 bg-gray-900 text-blue-600 focus:ring-blue-500">
+                                    <span class="text-[10px] text-gray-400 group-hover:text-gray-200 uppercase font-bold">Show Optional Features</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fleet Manager View -->
+                <div v-if="view === 'fleet'" class="flex-1 overflow-y-auto grid grid-cols-1 lg:grid-cols-2 gap-8 pr-2">
+                    <div class="mainsail-card rounded-lg p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-white">Discovered Hardware</h3>
+                            <button @click="discoverDevices" :disabled="querying" class="text-gray-400 hover:text-white disabled:opacity-50" title="Scan for Hardware">
+                                <i class="fas fa-sync-alt" :class="querying ? 'fa-spin' : ''"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div v-if="devices.serial.length === 0 && devices.can.length === 0 && (!devices.linux || devices.linux.length === 0)" class="text-center py-10 text-gray-400">
+                                <p>No devices found. Click scan to search.</p>
+                            </div>
+                            
+                            <div v-if="devices.serial.length > 0">
+                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Serial & UART Devices</h4>
+                                <div v-for="dev in devices.serial" :key="dev.id" class="flex items-center justify-between p-3 bg-gray-800 rounded mb-2">
+                                    <div class="overflow-hidden flex items-center">
+                                        <i v-if="dev.managed" class="fas fa-check-circle text-green-500 mr-3 flex-none" title="Managed in Fleet"></i>
+                                        <div class="overflow-hidden">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="text-sm font-bold truncate text-gray-100">{{ dev.name }}</p>
+                                                <span v-if="dev.type === 'uart'" class="text-[8px] bg-orange-900 text-orange-200 px-1 rounded font-bold uppercase">UART</span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 font-mono truncate">{{ dev.id }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2 flex-none ml-2">
+                                        <button @click="rebootDevice(dev.id, dev.mode === 'ready' ? 'regular' : 'katapult', 'serial')" 
+                                                class="text-xs transition-colors"
+                                                :class="dev.mode === 'ready' ? 'text-blue-400 hover:text-blue-300' : 'text-gray-500 hover:text-blue-400'"
+                                                :title="dev.mode === 'ready' ? 'Restart to Firmware' : 'Reboot to DFU'">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                        <button @click="attachToFleet(dev, 'serial')" class="text-orange-400 hover:text-orange-300 text-xs" title="Attach to existing fleet device">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                        <button @click="addDeviceToFleet(dev, 'serial')" class="text-blue-400 hover:text-blue-300 text-sm">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="devices.can.length > 0">
+                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">CAN Devices</h4>
+                                <div v-for="dev in devices.can" :key="dev.id" class="flex items-center justify-between p-3 bg-gray-800 rounded mb-2">
+                                    <div class="overflow-hidden flex items-center">
+                                        <i v-if="dev.managed" class="fas fa-check-circle text-green-500 mr-3 flex-none" title="Managed in Fleet"></i>
+                                        <div class="overflow-hidden">
+                                            <div class="flex items-center space-x-2">
+                                                <p class="text-sm font-bold text-gray-100 truncate">{{ dev.name }}</p>
+                                                <span class="text-[8px] font-bold uppercase" :class="statusColor(dev.mode)">{{ formatStatus(dev.mode) }}</span>
+                                            </div>
+                                            <p class="text-[10px] text-gray-400 font-mono truncate">{{ dev.id }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2 flex-none ml-2">
+                                        <button @click="rebootDevice(dev.id, dev.mode === 'ready' ? 'regular' : 'katapult', 'can')" 
+                                                class="text-xs transition-colors"
+                                                :class="dev.mode === 'ready' ? 'text-blue-400 hover:text-blue-300' : 'text-gray-500 hover:text-blue-400'"
+                                                :title="dev.mode === 'ready' ? 'Restart to Firmware' : 'Reboot to Katapult'">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                        <button @click="addDeviceToFleet(dev, 'can')" class="text-blue-400 hover:text-blue-300 text-sm flex-none ml-2">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="devices.dfu && devices.dfu.length > 0">
+                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">DFU Devices</h4>
+                                <div v-for="dev in devices.dfu" :key="dev.id" class="flex items-center justify-between p-3 bg-gray-800 rounded mb-2">
+                                    <div class="flex items-center">
+                                        <i v-if="dev.managed" class="fas fa-check-circle text-green-500 mr-3 flex-none" title="Managed in Fleet"></i>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-100">{{ dev.name }}</p>
+                                            <p class="text-[10px] text-gray-400 font-mono">{{ dev.id }}</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button @click="rebootDevice(dev.id, 'regular', 'dfu')" class="text-green-400 hover:text-green-300 text-xs" title="Attempt Restart to Firmware">
+                                            <i class="fas fa-power-off"></i>
+                                        </button>
+                                        <button @click="attachToFleet(dev, 'dfu')" class="text-orange-400 hover:text-orange-300 text-xs" title="Attach to existing fleet device">
+                                            <i class="fas fa-link"></i>
+                                        </button>
+                                        <button @click="addDeviceToFleet(dev, 'dfu')" class="text-blue-400 hover:text-blue-300 text-sm">
+                                            <i class="fas fa-plus-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="devices.linux && devices.linux.length > 0">
+                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Linux Process</h4>
+                                <div v-for="dev in devices.linux" :key="dev.id" class="flex items-center justify-between p-3 bg-gray-800 rounded mb-2">
+                                    <div class="flex items-center">
+                                        <i v-if="dev.managed" class="fas fa-check-circle text-green-500 mr-3 flex-none" title="Managed in Fleet"></i>
+                                        <div>
+                                            <p class="text-sm font-bold text-gray-100">{{ dev.name }}</p>
+                                            <p class="text-[10px] text-gray-400 font-mono">{{ dev.id }}</p>
+                                        </div>
+                                    </div>
+                                    <button @click="addDeviceToFleet(dev, 'linux')" class="text-blue-400 hover:text-blue-300 text-sm">
+                                        <i class="fas fa-plus-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mainsail-card rounded-lg p-6">
+                        <h3 class="text-lg font-bold mb-6 text-white">Registered Fleet</h3>
+                        <div class="space-y-4">
+                            <div v-for="dev in fleet" :key="dev.id" class="relative group">
+                                <!-- Parent Device Entry -->
+                                <div class="p-4 bg-gray-800 rounded border-l-4 relative z-10" :class="{'border-purple-500': dev.method === 'can', 'border-blue-500': dev.method === 'serial', 'border-green-500': dev.method === 'linux', 'border-orange-500': dev.method === 'dfu'}">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1 min-w-0 mr-4">
+                                            <div class="flex items-center space-x-2">
+                                                <input v-model="dev.name" @change="updateFleetDevice(dev)" class="bg-transparent font-bold text-sm focus:outline-none border-b border-transparent focus:border-gray-600 text-white w-full truncate">
+                                                <span class="flex-none flex items-center text-[9px] uppercase font-bold" :class="statusColor(dev.status)">
+                                                    <i class="fas fa-circle text-[5px] mr-1"></i> {{ formatStatus(dev.status) }}
+                                                </span>
+                                            </div>
+                                            <input v-model="dev.id" @focus="dev._oldId = dev.id" @change="updateFleetDevice(dev)" class="bg-transparent text-[10px] text-gray-400 font-mono focus:outline-none border-b border-transparent focus:border-gray-600 w-full truncate">
+                                        </div>
+                                        <button @click="removeDeviceFromFleet(dev.id)" class="flex-none text-red-500 hover:text-red-400 text-xs">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+
+                                    <div class="mt-4 flex items-center space-x-4">
+                                        <select v-model="dev.profile" @change="updateFleetDevice(dev)" class="mainsail-input text-xs p-1 rounded flex-1">
+                                            <option value="">-- Assign Profile --</option>
+                                            <option v-for="p in profiles" :key="p" :value="p">{{ p }}</option>
+                                        </select>
+                                        <select v-model="dev.method" @change="updateFleetDevice(dev)" class="mainsail-input text-[10px] p-1 rounded bg-gray-900 border-gray-700 text-gray-400 font-bold uppercase">
+                                            <option value="serial">Serial</option>
+                                            <option value="can">CAN</option>
+                                            <option value="dfu">DFU</option>
+                                            <option value="linux">Linux</option>
+                                        </select>
+                                    </div>
+                                    <div class="mt-3 flex items-center space-x-4">
+                                        <label class="flex items-center space-x-2 cursor-pointer group">
+                                            <input type="checkbox" v-model="dev.is_katapult" @change="updateFleetDevice(dev)" class="h-3 w-3 rounded border-gray-700 bg-gray-900 text-blue-600 focus:ring-blue-500">
+                                            <span class="text-[10px] text-gray-400 group-hover:text-gray-200 uppercase font-bold">Katapult</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2 cursor-pointer group">
+                                            <input type="checkbox" v-model="dev.is_bridge" @change="updateFleetDevice(dev)" class="h-3 w-3 rounded border-gray-700 bg-gray-900 text-blue-600 focus:ring-blue-500">
+                                            <span class="text-[10px] text-gray-400 group-hover:text-gray-200 uppercase font-bold">CAN Bridge</span>
+                                        </label>
+                                    </div>
+                                    <div class="mt-3">
+                                        <textarea v-model="dev.notes" @change="updateFleetDevice(dev)" 
+                                                  placeholder="Notes (URLs, pinouts, etc...)"
+                                                  class="w-full mainsail-input text-[10px] p-2 rounded h-16 resize-none focus:outline-none focus:border-blue-500 text-gray-200"
+                                        ></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Attached DFU Device (Sibling Entry) -->
+                                <div v-if="dev.dfu_id" class="relative ml-8 mt-2">
+                                    <!-- Connector Line -->
+                                    <div class="absolute -left-5 -top-6 h-10 w-5 border-l-2 border-b-2 border-gray-700 rounded-bl z-0"></div>
+                                    
+                                    <div class="p-4 bg-gray-800 rounded border-l-4 border-orange-500 shadow-lg relative z-10">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1 min-w-0 mr-4">
+                                                <div class="flex items-center space-x-2 mb-1">
+                                                    <i class="fas fa-microchip text-xs text-orange-500"></i>
+                                                    <span class="text-[10px] font-bold text-orange-400 uppercase tracking-widest truncate">DFU Bootloader Identity</span>
+                                                    <span class="flex-none flex items-center text-[9px] uppercase font-bold" :class="statusColor(dev.dfu_status)">
+                                                        <i class="fas fa-circle text-[5px] mr-1"></i> {{ formatStatus(dev.dfu_status) }}
+                                                    </span>
+                                                </div>
+                                                <p class="text-sm font-bold text-white opacity-80 truncate">{{ dev.name }} (DFU)</p>
+                                                <p class="text-[10px] text-gray-400 font-mono mt-1 truncate">{{ dev.dfu_id }}</p>
+                                            </div>
+                                            <button @click="dev.dfu_id = null; updateFleetDevice(dev)" class="flex-none text-gray-500 hover:text-red-400 text-xs transition-colors" title="Detach DFU device">
+                                                <i class="fas fa-unlink"></i>
+                                            </button>
+                                        </div>
+                                        <div class="mt-3 flex items-center space-x-3">
+                                            <div class="flex items-center space-x-1">
+                                                <span class="text-[9px] text-gray-500 font-bold uppercase">Method:</span>
+                                                <span class="text-[9px] bg-orange-900/30 text-orange-300 px-1.5 py-0.5 rounded border border-orange-500/20 font-bold uppercase tracking-tighter">DFU</span>
+                                            </div>
+                                            <button @click="testMagicBaud(dev)" 
+                                                    :disabled="flashing"
+                                                    class="text-[9px] bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-0.5 rounded border border-gray-600 font-bold uppercase transition-colors disabled:opacity-50"
+                                                    :class="{'border-green-500 text-green-400': dev.magic_baud_tested && dev.dfu_status !== 'ready', 'border-orange-500 text-orange-400': dev.dfu_status === 'ready'}"
+                                                    title="Test the full DFU entry/exit cycle">
+                                                <i class="fas" :class="dev.dfu_status === 'ready' ? 'fa-info-circle' : (dev.magic_baud_tested ? 'fa-check-circle' : 'fa-vial')"></i> 
+                                                {{ dev.dfu_status === 'ready' ? 'Already in DFU' : (dev.magic_baud_tested ? 'Tested' : 'Test DFU Cycle') }}
+                                            </button>
+
+                                            <button v-if="dev.dfu_status === 'ready'"
+                                                    @click="rebootDevice(dev.dfu_id, 'regular', 'dfu')" 
+                                                    :disabled="flashing"
+                                                    class="text-[9px] bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-0.5 rounded border border-gray-600 font-bold uppercase transition-colors disabled:opacity-50"
+                                                    title="Attempt restart to firmware">
+                                                <i class="fas fa-redo"></i> 
+                                                Exit DFU
+                                            </button>
+                                            
+                                            <label class="flex items-center space-x-1.5 cursor-pointer group" :class="{'opacity-40 cursor-not-allowed': !dev.magic_baud_tested}">
+                                                <input type="checkbox" 
+                                                       v-model="dev.use_magic_baud" 
+                                                       :disabled="!dev.magic_baud_tested"
+                                                       @change="updateFleetDevice(dev)"
+                                                       class="h-3 w-3 rounded border-gray-700 bg-gray-900 text-orange-600 focus:ring-orange-500 disabled:cursor-not-allowed">
+                                                <span class="text-[9px] text-gray-400 group-hover:text-gray-200 uppercase font-bold" title="AUTO-DFU: If the device is in runtime, attempt to reboot it into DFU before flashing.">Auto-DFU</span>
+                                            </label>
+
+                                            <label class="flex items-center space-x-1.5 cursor-pointer group" :class="{'opacity-40 cursor-not-allowed': !dev.dfu_exit_tested}">
+                                                <input type="checkbox" 
+                                                       v-model="dev.use_dfu_exit" 
+                                                       :disabled="!dev.dfu_exit_tested"
+                                                       @change="updateFleetDevice(dev)"
+                                                       class="h-3 w-3 rounded border-gray-700 bg-gray-900 text-orange-600 focus:ring-orange-500 disabled:cursor-not-allowed">
+                                                <span class="text-[9px] text-gray-400 group-hover:text-gray-200 uppercase font-bold" title="AUTO-EXIT: After flashing, attempt to reboot back to runtime/firmware.">Auto-Exit</span>
+                                            </label>
+                                        </div>
+                                        <div v-if="!dev.use_magic_baud && dev.method === 'serial'" class="mt-2 px-2 py-1 bg-orange-900/20 border border-orange-500/20 rounded">
+                                            <p class="text-[8px] text-orange-400 uppercase font-bold leading-tight">
+                                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                                Manual DFU entry required during flash
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- Custom Modal -->
+        <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div class="bg-gray-800 border border-gray-700 rounded-lg shadow-2xl w-full max-w-md overflow-hidden">
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-white mb-2">{{ modal.title }}</h3>
+                    <p class="text-gray-300 text-sm mb-4 whitespace-pre-wrap">{{ modal.message }}</p>
+                    
+                    <div v-if="modal.type === 'prompt'" class="mb-4">
+                        <input v-model="modal.inputValue" 
+                               @keyup.enter="closeModal(true)"
+                               @keyup.esc="closeModal(false)"
+                               class="w-full bg-gray-900 border border-gray-700 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-blue-500"
+                               ref="modalInput">
+                    </div>
+
+                    <div v-if="modal.type === 'selection'" class="mb-4 space-y-2">
+                        <button v-for="opt in modal.options" 
+                                :key="opt.value"
+                                @click="closeModal(opt.value)"
+                                class="w-full text-left px-4 py-3 bg-gray-900 hover:bg-gray-700 border border-gray-700 rounded text-sm text-white transition-colors flex items-center justify-between group">
+                            <span>{{ opt.label }}</span>
+                            <i class="fas fa-chevron-right text-gray-600 group-hover:text-blue-400 transition-colors"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex justify-end space-x-3">
+                        <button v-if="modal.type !== 'alert' && modal.type !== 'selection'" 
+                                @click="closeModal(false)"
+                                class="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white transition-colors">
+                            Cancel
+                        </button>
+                        <button v-if="modal.type !== 'selection'"
+                                @click="closeModal(true)"
+                                class="px-4 py-2 text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors">
+                            {{ modal.type === 'alert' ? 'OK' : (modal.type === 'confirm' ? 'Confirm' : 'OK') }}
+                        </button>
+                        <button v-if="modal.type === 'selection'"
+                                @click="closeModal(null)"
+                                class="px-4 py-2 text-sm font-bold text-gray-400 hover:text-white transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, watch } = Vue;
+
+        const KconfigNode = {
+            name: 'kconfig-node',
+            props: ['node', 'showRawSymbolNames'],
+            template: `
+                <div v-if="node.visible" class="mb-1 kconfig-item">
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-800/80 bg-gray-900/20 rounded border border-gray-800/50 group transition-colors">
+                        <div class="flex items-center space-x-3 flex-1">
+                            <!-- Boolean -->
+                            <input v-if="node.type === 'bool'" type="checkbox" 
+                                   :checked="node.value === 'y'" 
+                                   :disabled="node.readonly"
+                                   @change="$emit('update', node.name, $event.target.checked ? 'y' : 'n')"
+                                   class="h-4 w-4 rounded border-gray-700 bg-gray-900 text-blue-600 focus:ring-blue-500 disabled:opacity-50">
+                            
+                            <div class="flex flex-col">
+                                <span class="text-sm" :class="[node.type === 'menu' ? 'font-bold text-blue-400' : 'text-gray-100', node.readonly ? 'opacity-50' : '']">
+                                    {{ node.prompt }}
+                                </span>
+                                <span v-if="showRawSymbolNames && node.name" class="text-[9px] text-gray-400 font-mono">{{ node.name }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-4">
+                            <!-- Choice -->
+                            <select v-if="node.type === 'choice'" 
+                                    :value="node.value"
+                                    :disabled="node.readonly"
+                                    @change="$emit('update', node.name, $event.target.value)"
+                                    class="mainsail-input rounded px-2 py-1 text-xs bg-gray-900 border-gray-700 min-w-[180px] disabled:opacity-50">
+                                <option v-for="c in node.choices" :key="c.name" :value="c.name">{{ c.prompt }}</option>
+                            </select>
+
+                            <!-- String / Hex / Int -->
+                            <input v-if="['string', 'hex', 'int'].includes(node.type)" 
+                                   type="text" :value="node.value"
+                                   :disabled="node.readonly"
+                                   @input="$emit('update', node.name, $event.target.value)"
+                                   class="mainsail-input rounded px-2 py-1 text-xs w-48 bg-gray-900 border-gray-700 disabled:opacity-50">
+                        </div>
+                    </div>
+                    
+                    <p v-if="node.help" class="text-[10px] text-gray-300 mt-1 ml-8 max-w-2xl leading-relaxed italic opacity-90">{{ node.help }}</p>
+
+                    <!-- Only show children if NOT a choice (to avoid redundant checkboxes) -->
+                    <div v-if="node.children && node.type !== 'choice'" class="kconfig-menu mt-1 ml-4 border-l border-gray-800 pl-2">
+                        <kconfig-node v-for="child in node.children" :key="child.name || child.prompt" :node="child" :show-raw-symbol-names="showRawSymbolNames" @update="(n, v) => $emit('update', n, v)"></kconfig-node>
+                    </div>
+                </div>
+            `
+        };
+
+        createApp({
+            components: { KconfigNode },
+            setup() {
+                const view = ref(localStorage.getItem('kf_view') || 'dashboard');
+                const configTree = ref([]);
+                const profiles = ref([]);
+                const fleet = ref([]);
+                const services = ref([]);
+                const devices = ref({ serial: [], can: [], dfu: [], linux: [] });
+                const selectedProfile = ref(localStorage.getItem('kf_profile') || '');
+                const loading = ref(false);
+                const building = ref(false);
+                const flashing = ref(false);
+                const updating = ref(false);
+                const querying = ref(false);
+                const buildLogs = ref("");
+                const currentTaskId = ref(null);
+                const taskCancelled = ref(false);
+                const modifiedValues = ref(JSON.parse(localStorage.getItem('kf_modified') || '{}'));
+                const selectedDevice = ref({ id: '', method: '' });
+                const error = ref(null);
+                const mainsailUrl = window.location.protocol + '//' + window.location.hostname;
+                const showRawSymbolNames = ref(localStorage.getItem('kf_show_raw_symbols') === 'true');
+                const showOptionalFeatures = ref(localStorage.getItem('kf_show_optional') === 'true');
+                const isKlipperKconfiglib = ref(true);
+
+                // Modal State
+                const modal = ref({
+                    show: false,
+                    title: '',
+                    message: '',
+                    type: 'alert', // alert, confirm, prompt, selection
+                    inputValue: '',
+                    options: [], // For selection type: [{label, value}]
+                    resolve: null
+                });
+
+                const showAlert = (title, message) => {
+                    return new Promise(resolve => {
+                        modal.value = { show: true, title, message, type: 'alert', inputValue: '', options: [], resolve };
+                    });
+                };
+
+                const showConfirm = (title, message) => {
+                    return new Promise(resolve => {
+                        modal.value = { show: true, title, message, type: 'confirm', inputValue: '', options: [], resolve };
+                    });
+                };
+
+                const showPrompt = (title, message, defaultValue = '') => {
+                    return new Promise(resolve => {
+                        modal.value = { show: true, title, message, type: 'prompt', inputValue: defaultValue, options: [], resolve };
+                    });
+                };
+
+                const showSelection = (title, message, options) => {
+                    return new Promise(resolve => {
+                        modal.value = { show: true, title, message, type: 'selection', inputValue: '', options, resolve };
+                    });
+                };
+
+                const closeModal = (result) => {
+                    const resolve = modal.value.resolve;
+                    const value = modal.value.inputValue;
+                    const type = modal.value.type;
+                    modal.value.show = false;
+                    if (resolve) {
+                        if (type === 'selection') {
+                            resolve(result); // result will be the selected value
+                        } else if (type === 'prompt') {
+                            resolve(result ? value : null);
+                        } else {
+                            resolve(result);
+                        }
+                    }
+                };
+
+                watch(view, (v) => localStorage.setItem('kf_view', v));
+                watch(selectedProfile, (p) => localStorage.setItem('kf_profile', p));
+                watch(modifiedValues, (m) => localStorage.setItem('kf_modified', JSON.stringify(m)), { deep: true });
+                watch(showRawSymbolNames, (v) => localStorage.setItem('kf_show_raw_symbols', v));
+                watch(showOptionalFeatures, (v) => {
+                    localStorage.setItem('kf_show_optional', v);
+                    fetchTree(selectedProfile.value);
+                });
+
+                const fetchTree = async (profile = '') => {
+                    loading.value = true;
+                    error.value = null;
+                    try {
+                        const values = Object.entries(modifiedValues.value).map(([name, value]) => ({ name, value }));
+                        const res = await fetch('/config/tree', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                profile: profile || selectedProfile.value, 
+                                values,
+                                show_optional: showOptionalFeatures.value
+                            })
+                        });
+                        if (!res.ok) {
+                            const data = await res.json();
+                            throw new Error(data.detail || 'Failed to load Kconfig');
+                        }
+                        configTree.value = await res.json();
+                    } catch (e) {
+                        console.error(e);
+                        error.value = e.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const fetchProfiles = async () => {
+                    const res = await fetch('/profiles');
+                    const data = await res.json();
+                    profiles.value = data.profiles;
+                };
+
+                const fetchFleet = async (fast = true) => {
+                    querying.value = true;
+                    try {
+                        // Only do the "fast" load if requested and we don't have data or it's a manual refresh
+                        if (fast && fleet.value.length === 0) {
+                            const fastRes = await fetch('/fleet?fast=true');
+                            fleet.value = await fastRes.json();
+                        }
+
+                        // Then, get the full status (this may be slow due to CAN discovery)
+                        const res = await fetch('/fleet');
+                        fleet.value = await res.json();
+                    } catch (e) {
+                        console.error("Failed to fetch fleet", e);
+                    } finally {
+                        querying.value = false;
+                    }
+                };
+
+                let lastFleetFetch = 0;
+                const fetchFleetThrottled = async () => {
+                    const now = Date.now();
+                    if (now - lastFleetFetch < 2000) return; // 2 second throttle
+                    lastFleetFetch = now;
+                    await fetchFleet(false);
+                };
+
+                const fetchServices = async () => {
+                    try {
+                        const res = await fetch('/services/status');
+                        services.value = await res.json();
+                    } catch (e) {
+                        console.error("Failed to fetch services", e);
+                    }
+                };
+
+                const fetchSystemStatus = async () => {
+                    try {
+                        const res = await fetch('/api/status');
+                        const data = await res.json();
+                        isKlipperKconfiglib.value = data.is_klipper_kconfiglib;
+                    } catch (e) {
+                        console.error("Failed to fetch system status", e);
+                    }
+                };
+
+                const manageServices = async (action) => {
+                    buildLogs.value += `>>> Requesting services ${action}...\n`;
+                    try {
+                        const res = await fetch(`/services/manage?action=${action}`, { method: 'POST' });
+                        const data = await res.json();
+                        buildLogs.value += data.message;
+                        await fetchServices();
+                    } catch (e) {
+                        buildLogs.value += `!!! Error: ${e.message}\n`;
+                    }
+                };
+
+                const discoverDevices = async () => {
+                    querying.value = true;
+                    try {
+                        const res = await fetch('/devices/discover');
+                        devices.value = await res.json();
+                    } catch (e) {
+                        console.error("Failed to discover devices", e);
+                    } finally {
+                        querying.value = false;
+                    }
+                };
+
+                let updateTimeout = null;
+                const updateValue = (name, value) => {
+                    modifiedValues.value[name] = value;
+                    
+                    // Local update for immediate feedback
+                    const updateNode = (nodes) => {
+                        for (const node of nodes) {
+                            if (node.name === name) {
+                                node.value = value;
+                                return true;
+                            }
+                            if (node.children && updateNode(node.children)) return true;
+                        }
+                        return false;
+                    };
+                    updateNode(configTree.value);
+
+                    // Debounced refresh for visibility/dependencies
+                    clearTimeout(updateTimeout);
+                    updateTimeout = setTimeout(() => {
+                        fetchTree(selectedProfile.value);
+                    }, 500);
+                };
+
+                const saveProfile = async () => {
+                    let name = selectedProfile.value;
+                    let base_profile = selectedProfile.value;
+                    if (!name) {
+                        name = await showPrompt("Save Profile", "Enter profile name:", "my_mcu");
+                        base_profile = null;
+                    }
+                    if (!name) return;
+
+                    const values = Object.entries(modifiedValues.value).map(([name, value]) => ({ name, value }));
+                    await fetch('/config/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, values, base_profile })
+                    });
+                    
+                    const isNew = !selectedProfile.value;
+                    modifiedValues.value = {};
+                    await fetchProfiles();
+                    selectedProfile.value = name;
+                    loadProfile();
+                    
+                    if (isNew) {
+                        await showAlert("Success", `Profile "${name}" created successfully.`);
+                    }
+                };
+
+                const saveProfileAs = async () => {
+                    if (!selectedProfile.value) return;
+                    const name = await showPrompt("Save Profile As", "Enter new profile name:", `${selectedProfile.value}_copy`);
+                    if (!name || name === selectedProfile.value) return;
+
+                    const values = Object.entries(modifiedValues.value).map(([name, value]) => ({ name, value }));
+                    await fetch('/config/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            name, 
+                            values,
+                            base_profile: selectedProfile.value 
+                        })
+                    });
+                    
+                    modifiedValues.value = {};
+                    await fetchProfiles();
+                    selectedProfile.value = name;
+                    loadProfile();
+                };
+
+                const newProfile = async () => {
+                    if (Object.keys(modifiedValues.value).length > 0) {
+                        if (!await showConfirm("New Profile", "Discard unsaved changes and start a new profile?")) return;
+                    }
+                    selectedProfile.value = '';
+                    modifiedValues.value = {};
+                    fetchTree();
+                };
+
+                const deleteProfile = async () => {
+                    if (!selectedProfile.value) return;
+                    if (!await showConfirm("Delete Profile", `Are you sure you want to delete the profile "${selectedProfile.value}"?`)) return;
+
+                    await fetch(`/profiles/${selectedProfile.value}`, { method: 'DELETE' });
+                    selectedProfile.value = '';
+                    modifiedValues.value = {};
+                    fetchProfiles();
+                    fetchTree();
+                };
+
+                const startBuild = async (profileName = null) => {
+                    const target = profileName || selectedProfile.value;
+                    if (!target) return;
+                    
+                    // If we are building the currently selected profile and have unsaved changes, save them first
+                    if (!profileName && Object.keys(modifiedValues.value).length > 0) {
+                        await saveProfile();
+                    }
+                    
+                    taskCancelled.value = false;
+                    building.value = true;
+                    buildLogs.value += `>>> Starting build for ${target}...\n`;
+                    
+                    try {
+                        const response = await fetch(`/build/${target}`);
+                        currentTaskId.value = response.headers.get('X-Task-Id');
+
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+                            const chunk = decoder.decode(value, { stream: true });
+                            buildLogs.value += chunk;
+                            scrollToBottom();
+                        }
+                    } catch (e) {
+                        buildLogs.value += `!!! Error: ${e.message}\n`;
+                    } finally {
+                        building.value = false;
+                        currentTaskId.value = null;
+                    }
+                };
+
+                const runBatch = async (action) => {
+                    taskCancelled.value = false;
+                    building.value = true;
+                    buildLogs.value += `>>> Starting batch operation: ${action}...\n`;
+                    
+                    try {
+                        const res = await fetch(`/batch/${action}`);
+                        const { task_id } = await res.json();
+                        currentTaskId.value = task_id;
+                        
+                        let lastLogIndex = 0;
+                        while (true) {
+                            const statusRes = await fetch(`/task/status/${task_id}`);
+                            const task = await statusRes.json();
+                            
+                            if (task.logs.length > lastLogIndex) {
+                                for (let i = lastLogIndex; i < task.logs.length; i++) {
+                                    buildLogs.value += task.logs[i];
+                                }
+                                lastLogIndex = task.logs.length;
+                                scrollToBottom();
+                                // Refresh fleet status when new logs arrive to show real-time status changes
+                                fetchFleetThrottled();
+                            }
+                            
+                            if (task.completed) break;
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
+                    } catch (e) {
+                        buildLogs.value += `!!! Error: ${e.message}\n`;
+                    } finally {
+                        building.value = false;
+                        currentTaskId.value = null;
+                        fetchFleet();
+                    }
+                };
+
+                const cancelTask = async () => {
+                    if (!currentTaskId.value) return;
+                    taskCancelled.value = true;
+                    try {
+                        await fetch(`/task/cancel/${currentTaskId.value}`, { method: 'POST' });
+                        buildLogs.value += `>>> Cancellation requested...\n`;
+                    } catch (e) {
+                        buildLogs.value += `!!! Failed to cancel: ${e.message}\n`;
+                    }
+                };
+
+                const startFlash = async (profile, deviceId, method, dfuId = null) => {
+                    // Find the device in fleet to get use_magic_baud setting
+                    const dev = fleet.value.find(d => d.id === deviceId);
+                    const useMagicBaud = dev ? dev.use_magic_baud : false;
+
+                    taskCancelled.value = false;
+                    flashing.value = true;
+                    buildLogs.value += `>>> Flashing ${profile} to ${deviceId}...\n`;
+                    
+                    try {
+                        const response = await fetch('/flash', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ 
+                                profile, 
+                                device_id: deviceId, 
+                                method, 
+                                dfu_id: dfuId,
+                                use_magic_baud: useMagicBaud
+                            })
+                        });
+
+                        currentTaskId.value = response.headers.get('X-Task-Id');
+
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+                            const chunk = decoder.decode(value, { stream: true });
+                            buildLogs.value += chunk;
+                            scrollToBottom();
+                            // Refresh fleet status to show real-time status changes
+                            fetchFleetThrottled();
+                        }
+                    } catch (e) {
+                        buildLogs.value += `!!! Error: ${e.message}\n`;
+                    } finally {
+                        flashing.value = false;
+                        currentTaskId.value = null;
+                        fetchFleet();
+                    }
+                };
+
+                const testMagicBaud = async (dev) => {
+                    if (flashing.value) return;
+                    
+                    if (dev.dfu_status === 'ready') {
+                        const confirmed = await showConfirm(
+                            "Test DFU Exit", 
+                            `"${dev.name}" is already in DFU mode. Do you want to test the "Restart to Firmware" command?`
+                        );
+                        if (!confirmed) return;
+                    } else {
+                        if (dev.status !== 'service') {
+                            await showAlert("Not In Service", `"${dev.name}" is currently ${formatStatus(dev.status)}. To test the DFU cycle, the device must be running Klipper (In Service).`);
+                            return;
+                        }
+
+                        const confirmed = await showConfirm(
+                            "Test DFU Cycle", 
+                            `This will test the full software-triggered reboot cycle for "${dev.name}":\n\n1. Enter DFU: Attempt to reboot into DFU mode (1200bps trick).\n2. Exit DFU: Attempt to restart from DFU back to Klipper.\n\nThis helps verify if "Flash All" will work unattended. Continue?`
+                        );
+                        if (!confirmed) return;
+                    }
+
+                    taskCancelled.value = false;
+                    flashing.value = true;
+                    buildLogs.value += `>>> Starting DFU Cycle Test for ${dev.name}...\n`;
+                    
+                    try {
+                        const response = await fetch(`/debug/test_magic_baud?device_id=${encodeURIComponent(dev.id)}&full_cycle=true`, { method: 'POST' });
+                        currentTaskId.value = response.headers.get('X-Task-Id');
+
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+
+                        let phase1_success = false;
+                        let phase2_success = false;
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+                            const chunk = decoder.decode(value, { stream: true });
+                            buildLogs.value += chunk;
+                            if (chunk.includes("PHASE1_SUCCESS")) phase1_success = true;
+                            if (chunk.includes("PHASE2_SUCCESS")) phase2_success = true;
+                            scrollToBottom();
+                        }
+
+                        if (phase1_success) {
+                            dev.magic_baud_tested = true;
+                            dev.use_magic_baud = true;
+                        }
+                        if (phase2_success) {
+                            dev.dfu_exit_tested = true;
+                            dev.use_dfu_exit = true;
+                        }
+                        
+                        if (phase1_success || phase2_success) {
+                            await updateFleetDevice(dev);
+                            let msg = `DFU Cycle Test Results for "${dev.name}":\n\n`;
+                            msg += `1. DFU Entry: ${phase1_success ? 'SUCCESS' : 'FAILED'}\n`;
+                            msg += `2. DFU Exit: ${phase2_success ? 'SUCCESS' : 'FAILED'}\n\n`;
+                            msg += phase1_success && phase2_success 
+                                ? "Full cycle verified! Auto-DFU and Auto-Exit have been enabled."
+                                : "Partial success. Only verified features have been enabled.";
+                            await showAlert("Test Results", msg);
+                        }
+                    } catch (e) {
+                        buildLogs.value += `!!! Error: ${e.message}\n`;
+                    } finally {
+                        flashing.value = false;
+                        currentTaskId.value = null;
+                        fetchFleet();
+                    }
+                };
+
+                const quickFlash = async (dev) => {
+                    if (!dev.profile) {
+                        await showAlert("Missing Profile", "Please assign a profile to this device first.");
+                        return;
+                    }
+                    view.value = 'dashboard';
+                    await startBuild(dev.profile);
+                    if (taskCancelled.value) return;
+                    await startFlash(dev.profile, dev.id, dev.method, dev.dfu_id);
+                };
+
+                const quickBuild = async (dev) => {
+                    if (!dev.profile) {
+                        await showAlert("Missing Profile", "Please assign a profile to this device first.");
+                        return;
+                    }
+                    view.value = 'dashboard';
+                    await startBuild(dev.profile);
+                };
+
+                const quickFlashOnly = async (dev) => {
+                    if (!dev.profile) {
+                        await showAlert("Missing Profile", "Please assign a profile to this device first.");
+                        return;
+                    }
+                    view.value = 'dashboard';
+                    await startFlash(dev.profile, dev.id, dev.method, dev.dfu_id);
+                };
+
+                const buildAndDownload = async (profile) => {
+                    view.value = 'dashboard';
+                    await startBuild(profile);
+                    if (taskCancelled.value) return;
+                    window.location.href = '/download/' + profile;
+                };
+
+                const rebootDevice = async (deviceId, mode = 'katapult', method = null) => {
+                    taskCancelled.value = false;
+                    flashing.value = true;
+                    const modeText = mode === 'katapult' ? 'Katapult' : 'Regular';
+                    buildLogs.value += `>>> Requesting ${modeText} reboot for ${deviceId}...\n`;
+                    
+                    let url = `/flash/reboot?device_id=${encodeURIComponent(deviceId)}&mode=${mode}`;
+                    if (method) url += `&method=${method}`;
+                    
+                    try {
+                        const response = await fetch(url, {
+                            method: 'POST'
+                        });
+
+                        currentTaskId.value = response.headers.get('X-Task-Id');
+
+                        const reader = response.body.getReader();
+                        const decoder = new TextDecoder();
+
+                        while (true) {
+                            const { value, done } = await reader.read();
+                            if (done) break;
+                            const chunk = decoder.decode(value, { stream: true });
+                            buildLogs.value += chunk;
+                            scrollToBottom();
+                            // Refresh fleet status to show real-time status changes
+                            fetchFleetThrottled();
+                        }
+                    } catch (e) {
+                        buildLogs.value += `!!! Error: ${e.message}\n`;
+                    } finally {
+                        flashing.value = false;
+                        currentTaskId.value = null;
+                        setTimeout(fetchFleet, 2000);
+                    }
+                };
+
+                const statusColor = (status) => {
+                    if (status === 'ready') return 'text-green-500';
+                    if (status === 'service') return 'text-blue-500';
+                    if (status === 'dfu') return 'text-green-500';
+                    if (status === 'inactive') return 'text-gray-500';
+                    if (status === 'querying') return 'text-orange-500';
+                    if (status === 'bus_busy') return 'text-purple-400';
+                    if (status === 'flashing') return 'text-orange-400';
+                    if (status === 'failed') return 'text-red-500';
+                    return 'text-red-500';
+                };
+
+                const formatStatus = (status) => {
+                    if (status === 'ready') return 'Ready';
+                    if (status === 'service') return 'In Service';
+                    if (status === 'dfu') return 'Ready';
+                    if (status === 'inactive') return 'Inactive';
+                    if (status === 'querying') return 'Querying...';
+                    if (status === 'bus_busy') return 'Bus Busy';
+                    if (status === 'flashing') return 'Flashing...';
+                    if (status === 'failed') return 'Failed';
+                    return status || 'offline';
+                };
+
+                const addDeviceToFleet = async (dev, method) => {
+                    const name = await showPrompt("Add to Fleet", "Enter a friendly name for this device:", dev.name);
+                    if (!name) return;
+                    
+                    const newDevice = { 
+                        name, 
+                        id: dev.id, 
+                        profile: '', 
+                        method, 
+                        interface: 'can0',
+                        notes: '',
+                        is_katapult: dev.id.toLowerCase().includes('katapult') || dev.id.toLowerCase().includes('canboot'),
+                        is_bridge: false,
+                        dfu_id: method === 'dfu' ? dev.id : null,
+                        magic_baud_tested: false,
+                        use_magic_baud: false
+                    };
+                    try {
+                        const res = await fetch('/fleet/device', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(newDevice)
+                        });
+                        if (!res.ok) throw new Error("Failed to add device");
+                        await fetchFleet();
+                    } catch (e) {
+                        await showAlert("Error", "Error: " + e.message);
+                    }
+                };
+
+                const attachToFleet = async (hardwareDev, method) => {
+                    if (fleet.value.length === 0) {
+                        await showAlert("No Fleet", "No fleet devices registered. Add a device to your fleet first.");
+                        return;
+                    }
+                    
+                    const options = fleet.value.map(d => ({
+                        label: `${d.name} (${d.id})`,
+                        value: d.id
+                    }));
+                    
+                    const fleetId = await showSelection(
+                        "Attach to Fleet", 
+                        `Select a fleet device to attach this ${method.toUpperCase()} device to:`,
+                        options
+                    );
+                    
+                    if (!fleetId) return;
+                    
+                    const fleetDev = fleet.value.find(d => d.id === fleetId);
+                    try {
+                        const res = await fetch('/fleet/attach', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                fleet_id: fleetDev.id,
+                                hardware_id: hardwareDev.id,
+                                method: method
+                            })
+                        });
+                        if (!res.ok) throw new Error("Failed to attach device");
+                        await fetchFleet();
+                        await showAlert("Success", `Successfully attached to ${fleetDev.name}`);
+                    } catch (e) {
+                        await showAlert("Error", "Error: " + e.message);
+                    }
+                };
+
+                const updateFleetDevice = async (dev) => {
+                    try {
+                        const payload = { ...dev };
+                        if (dev._oldId && dev._oldId !== dev.id) {
+                            payload.old_id = dev._oldId;
+                        }
+                        const res = await fetch('/fleet/device', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+                        if (!res.ok) throw new Error("Failed to update device");
+                        if (payload.old_id) {
+                            dev._oldId = dev.id;
+                            await fetchFleet(); // Refresh to ensure IDs are synced
+                        }
+                    } catch (e) {
+                        await showAlert("Error", "Error: " + e.message);
+                        fetchFleet(); // Revert on error
+                    }
+                };
+
+                const removeDeviceFromFleet = async (id) => {
+                    if (!await showConfirm("Remove Device", "Remove this device from your fleet?")) return;
+                    try {
+                        const res = await fetch(`/fleet/device?device_id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                        if (!res.ok) {
+                            const data = await res.json();
+                            throw new Error(data.detail || "Failed to remove device");
+                        }
+                        fetchFleet();
+                    } catch (e) {
+                        await showAlert("Error", "Error: " + e.message);
+                    }
+                };
+
+                const selfUpdate = async () => {
+                    if (!await showConfirm("Self Update", "This will pull the latest changes and restart the service. Continue?")) return;
+                    updating.value = true;
+                    try {
+                        const res = await fetch('/api/self-update', { method: 'POST' });
+                        const data = await res.json();
+                        await showAlert("Update Started", data.message);
+                        // Wait a bit then reload
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 5000);
+                    } catch (e) {
+                        await showAlert("Update Failed", "Update failed: " + e.message);
+                        updating.value = false;
+                    }
+                };
+
+                const loadProfile = () => {
+                    modifiedValues.value = {};
+                    fetchTree(selectedProfile.value);
+                };
+
+                const createMissingProfile = async () => {
+                    const name = selectedProfile.value;
+                    if (!name) return;
+                    
+                    loading.value = true;
+                    try {
+                        await fetch('/config/save', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ name, values: [] })
+                        });
+                        await fetchProfiles();
+                        loadProfile();
+                    } catch (e) {
+                        error.value = "Failed to create profile: " + e.message;
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const scrollToBottom = () => {
+                    setTimeout(() => {
+                        const container = document.getElementById('log-container');
+                        if (container) container.scrollTop = container.scrollHeight;
+                    }, 10);
+                };
+
+                onMounted(() => {
+                    fetchTree(selectedProfile.value);
+                    fetchProfiles();
+                    fetchFleet();
+                    fetchServices();
+                    discoverDevices();
+                    fetchSystemStatus();
+                    
+                    // Refresh fleet status every 30 seconds
+                    setInterval(() => {
+                        fetchFleet();
+                    }, 30000);
+
+                    // Refresh service status every 10 seconds
+                    setInterval(() => {
+                        fetchServices();
+                    }, 10000);
+                });
+
+                const formatNotes = (text) => {
+                    if (!text) return '';
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    return text.replace(urlRegex, (url) => {
+                        return `<a href="${url}" target="_blank" class="text-blue-400 hover:underline">${url}</a>`;
+                    });
+                };
+
+                return { 
+                    view, configTree, profiles, fleet, selectedProfile, loading, building, flashing, updating, querying,
+                    buildLogs, updateValue, saveProfile, saveProfileAs, newProfile, deleteProfile, loadProfile, createMissingProfile, startBuild, runBatch, selfUpdate,
+                    devices, selectedDevice, discoverDevices, startFlash, quickFlash, quickBuild, quickFlashOnly, buildAndDownload, rebootDevice, statusColor, formatStatus,
+                    addDeviceToFleet, attachToFleet, updateFleetDevice, removeDeviceFromFleet, error, modifiedValues, formatNotes,
+                    mainsailUrl,
+                    modal, showAlert, showConfirm, showPrompt, closeModal, testMagicBaud,
+                    services, manageServices, cancelTask, currentTaskId,
+                    showRawSymbolNames, showOptionalFeatures, isKlipperKconfiglib
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
+

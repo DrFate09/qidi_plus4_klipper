@@ -1,0 +1,61 @@
+[gcode_macro PRINT_END]
+gcode:
+    {% set max_x = printer.configfile.config["stepper_x"]["position_max"]|float %}
+    {% set max_y = printer.configfile.config["stepper_y"]["position_max"]|float %}
+    {% set max_z = printer.configfile.config["stepper_z"]["position_max"]|float %}
+    {% set current_extruder_temp = printer.extruder.temperature|float %}
+    {% set min_extrusion_temp = printer.configfile.config["extruder"]["min_extrude_temp"]|float %}
+    {% set z_clearance = 50 %}
+
+    {% if (printer.toolhead.position.z + z_clearance) < max_z %}
+        {% set z_hop = 2  %}
+    {% else %}
+        {% set z_hop = 0 %}
+    {% endif %}
+
+    M106 P0 S0                                           # Turn off part cooling fan
+    M106 P2 S0                                           # Turn off side fan
+    M106 P3 S0                                           # Turn off activated charcoal fan
+
+    M104 S0                                              # Turn off hotend
+    M140 S0                                              # Turn off heated bed
+    M141 S0                                              # Turn off heated chamber
+
+    G91                                                  # Relative positioning
+    # {% if current_extruder_temp >= min_extrusion_temp + 5 %}   # Check if the hotend is hot enough to perform a retraction (with a small gap)  
+    #     G0 E-4.0 F300                                    # Retract filament
+    # {% endif %}
+    G0 Z{z_hop} F3600                                    # Move bed down a bit
+    G90                                                  # Absolute positioning
+    G0 X{max_x/2} Y{max_y-40} F20000                     # Move nozzle to remove stringing
+    _Z_CLEARANCE DISTANCE={z_clearance}                  # Lower bed
+    M400                                                 # Wait for buffer to clear
+    G92 E0                                               # Zero the extruder
+
+    M220 S100                                            # Set feedrate (speed percentage) back to 100%
+    M221 S100                                            # Set flow percentage back to 100%
+
+    SET_IDLE_TIMEOUT TIMEOUT={printer.configfile.settings.idle_timeout.timeout}   # Set timeout back to configured value
+    CLEAR_PAUSE                                          # Ensure pause state is cleared if applicable
+
+    M84                                                  # Disable steppers
+
+
+[gcode_macro _Z_CLEARANCE]
+variable_default_distance: 40.0
+gcode:
+    {% set current_z_height = printer.toolhead.position.z %}
+    {% set max_z_height = printer.toolhead.axis_maximum.z %}
+    {% set distance = params.DISTANCE|default(variable_default_distance)|float %}
+    {% set target_z_height = current_z_height + distance %}
+
+    {% set min_z_param = params.MIN_Z|default(None) %}
+    {% if min_z_param is not none %}
+        {% set min_z = min_z_param|float %}
+        {% if target_z_height < min_z %}
+            {% set target_z_height = min_z %}
+        {% endif %}
+    {% endif %}
+
+    G90                                                  # Absolute positioning
+    G1 Z{ [target_z_height, max_z_height]|min }

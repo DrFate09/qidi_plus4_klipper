@@ -10,7 +10,6 @@ trusted_clients:
     127.0.0.0/8
     169.254.0.0/16
     172.16.0.0/12
-    192.168.0.0/16
     FC00::/7
     FE80::/10
     ::1/128
@@ -41,6 +40,9 @@ enable_file_preprocessor: True
 enable_toolchange_next_pos: True
 update_spoolman_location: True
 
+# [spoolman]
+# server: http://192.168.86.139:8000/spoolman
+
 [spoolman]
 server: http://192.168.86.139:7913
 sync_rate: 5
@@ -53,24 +55,24 @@ ffmpeg_binary_path: /usr/bin/ffmpeg
 [file_manager]
 enable_object_processing: true
 
-# [webcam Creality Nebula]
+[webcam Creality Nebula]
 # enabled: False
-# service: webrtc-go2rtc
-# target_fps: 30 # 15 by default
-# stream_url: http://192.168.86.64:1984/stream.html?src=webcam_h264
-# snapshot_url: http://192.168.86.64:1984/api/frame.jpeg?src=webcam_h264
-# flip_horizontal: False
-# flip_vertical: False
-# rotation: 0 # May be 0, 90, 180, or 270. The default is 0.
-# aspect_ratio: 16:9 # Delete for 4:3 cameras
-# # Configuration UI: http://192.168.86.64:1984/
-# # Documentation: https://guides.jeikobu.net/go2rtc/
+service: webrtc-go2rtc
+target_fps: 30 # 15 by default
+stream_url: http://192.168.86.64:1984/stream.html?src=webcam
+snapshot_url: http://192.168.86.64:1984/api/frame.jpeg?src=webcam
+flip_horizontal: False
+flip_vertical: False
+rotation: 0 # May be 0, 90, 180, or 270. The default is 0.
+aspect_ratio: 16:9 # Delete for 4:3 cameras
+# Configuration UI: http://192.168.86.64:1984/
+# Documentation: https://guides.jeikobu.net/go2rtc/
 
-# [webcam Nebula MJPEG]
+# [webcam Creality Nebula MJPEG]
 # service: mjpegstreamer-adaptive
 # target_fps: 30
-# stream_url: http://192.168.86.64:1984/stream.html?src=webcam_mjpeg&mode=mjpeg
-# snapshot_url: http://192.168.86.64:1984/api/frame.jpeg?src=webcam_mjpeg
+# stream_url: http://192.168.86.64:1984/stream.html?src=webcam1&mode=mjpeg
+# snapshot_url: http://192.168.86.64:1984/api/frame.jpeg?src=webcam1
 
 [update_manager]
 channel: dev
@@ -89,15 +91,6 @@ managed_services: klipper
 origin: https://github.com/fluidd-core/fluidd-config.git
 path: /home/pi/fluidd-config
 primary_branch: master
-type: git_repo
-
-[update_manager KlipperScreen]
-install_script: /home/pi/KlipperScreen/scripts/KlipperScreen-install.sh
-requirements: /home/pi/KlipperScreen/scripts/KlipperScreen-requirements.txt
-env: /home/pi/.KlipperScreen-env/bin/python
-managed_services: KlipperScreen
-origin: https://github.com/moggieuk/KlipperScreen-Happy-Hare-Edition.git
-path: /home/pi/KlipperScreen
 type: git_repo
 
 [update_manager Klippain-ShakeTune]
@@ -209,7 +202,7 @@ channel: stable
 type: web
 persistent_files:
     config.json
-
+    
 [update_manager Klipper-Adaptive-Meshing-Purging]
 type: git_repo
 channel: dev
@@ -249,10 +242,10 @@ platform: auto
 #   platform.  The auto choice will attempt to automatically determine
 #   the correct platform.  The default is auto.
 estimator_config:
-#   A path relative to the "config" root specifying a config
-#   file to use for Klipper Estimator.  The default is to
-#   use a configuration dumped with data retrieved from Klipper's
-#   current settings.
+    #   A path relative to the "config" root specifying a config
+    #   file to use for Klipper Estimator.  The default is to
+    #   use a configuration dumped with data retrieved from Klipper's
+    #   current settings.
 auto_dump_default_config: false
 #   When set to true the default configuration for Klipper Estimator
 #   will be dumped every time Klippy restarts.  When false the
@@ -297,3 +290,21 @@ origin: https://github.com/marcofailli/soak-my-bed.git
 primary_branch: main
 install_script: install.sh
 managed_services: klipper
+
+[update_manager KlipperScreen]
+install_script: /home/pi/KlipperScreen/scripts/KlipperScreen-install.sh
+requirements: /home/pi/KlipperScreen/scripts/KlipperScreen-requirements.txt
+env: /home/pi/.KlipperScreen-env/bin/python
+managed_services: KlipperScreen
+origin: https://github.com/moggieuk/KlipperScreen-Happy-Hare-Edition.git
+path: /home/pi/KlipperScreen
+type: git_repo
+
+[include moonraker-obico-update.cfg]
+
+# [filaman]
+# server: http://192.168.86.139:8000
+# # api_key: uak.123.xxxxxxxxxxxxxxxxxxxxx
+# sync_rate: 5
+# default_density_g_cm3: 1.24
+# default_diameter_mm: 1.75

@@ -1,64 +1,38 @@
-[gcode_macro _TOGGLE_CASELIGHT]
-gcode:
-  SET_PIN PIN=caselight VALUE={(not printer['output_pin caselight'].value)|int}
-
-# ======================================================================
-# INCLUDES
-# ======================================================================
-[include plugins/*.cfg]
-[include moonraker_obico_macros.cfg]
-[include timelapse.cfg]
-[include KAMP_Settings.cfg]
-[include macros/*.cfg]
-[include gcode_macros.cfg]
 [include mmu/optional/client_macros.cfg]
-[include bunnybox_macros.cfg] 
-[include mmu/base/*.cfg]
-# [include mmu/*.cfg]
-# [include mmu/addons/*.cfg]
-# [include mmu/optional/*.cfg]
+#[include macros/mafized_macro.cfg]
+#######################################
+# Plugins, Includes & Basic Setup
+#######################################
+[include plugins/*.cfg]
 
-# ======================================================================
-# CORE PRINTER & MCU SETUP
-# ======================================================================
-[mcu]
-serial: /dev/serial/by-id/usb-Klipper_stm32f401xc_1F0034000950324257333720-if00
-restart_method: command
-#baud: 500000
+[include moonraker_obico_macros.cfg]
 
-[mcu toolhead]
-serial: /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
-restart_method: command
-baud: 500000
+[include timelapse.cfg]
 
-[mcu host]
-serial: /tmp/klipper_host_mcu
+[include KAMP_Settings.cfg]
 
-[printer]
-kinematics: corexy
-max_velocity: 600
-max_accel: 20000
-minimum_cruise_ratio: 0.5
-max_z_velocity: 20
-max_z_accel: 500
-square_corner_velocity: 5
+[include macros/*.cfg]
 
-[virtual_sdcard]
-path: /home/pi/printer_data/gcodes
-
-[display_status]
-
+[include gcode_macros.cfg]
+    
 [print_stats]
 
-[respond]
-
-[exclude_object]
+[soak_my_bed]
 
 [duplicate_pin_override]
 pins:
     
 [gcode_arcs]
 resolution: 0.5
+
+[exclude_object]
+
+[respond]
+
+[virtual_sdcard]
+path: /home/pi/printer_data/gcodes
+
+[display_status]
 
 [idle_timeout]
 timeout: 43200
@@ -72,9 +46,27 @@ gcode:
       M84
     {% endif %}
 
-# ======================================================================
-# MOTOR CONSTANTS
-# ======================================================================
+[firmware_retraction]
+retract_length: 0.8
+retract_speed: 50
+unretract_extra_length: 0
+unretract_speed: 50
+
+#######################################
+# Happy Hare MMU
+#######################################
+[include bunnybox_macros.cfg] 
+[include mmu/base/*.cfg]
+# [include mmu/*.cfg]
+# [include mmu/addons/*.cfg]
+# [include mmu/optional/*.cfg]
+
+# [save_variables]
+# filename: ~/printer_data/config/variables.cfg
+
+#######################################
+# Klipper TMC Autotune
+#######################################
 [motor_constants qidi_xy_motors]
 resistance: 1.4
 inductance: 0.0026
@@ -96,9 +88,208 @@ holding_torque: 0.1
 max_current: 1.0
 steps_per_revolution: 200
 
-# ======================================================================
-# STEPPERS & AUTOTUNE
-# ======================================================================
+#######################################
+# MCU Definitions
+#######################################
+[mcu]
+serial: /dev/serial/by-id/usb-Klipper_stm32f401xc_1F0034000950324257333720-if00
+restart_method: command
+#baud: 500000
+
+[mcu toolhead]
+serial: /dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0
+restart_method: command
+baud: 500000
+
+[mcu host]
+serial: /tmp/klipper_host_mcu
+
+#######################################
+# Basic Printer Kinematics
+#######################################
+[printer]
+kinematics: corexy
+max_velocity: 600
+max_accel: 20000
+minimum_cruise_ratio: 0.5
+max_z_velocity: 20
+max_z_accel: 500
+square_corner_velocity: 5
+
+[temperature_sensor mainboard_mcu]
+sensor_type: temperature_mcu
+sensor_mcu: mcu
+
+[temperature_sensor toolhead_mcu]
+sensor_type: temperature_mcu
+sensor_mcu: toolhead
+
+[temperature_sensor raspberry_pi]
+sensor_type: temperature_host
+min_temp: 10
+max_temp: 100
+
+#######################################
+# Bed Screws
+#######################################
+[bed_screws]
+screw1: 21, 24
+screw1_name: Front left
+screw2: 278, 24
+screw2_name: Front right
+screw3: 278, 283
+screw3_name: Back right
+screw4: 21, 283
+screw4_name: Back left
+speed: 150
+
+[screws_tilt_adjust]
+screw1: 21, 24
+screw1_name: Front left
+screw2: 278, 24
+screw2_name: Front right
+screw3: 278, 283
+screw3_name: Back right
+screw4: 21, 283
+screw4_name: Back left
+horizontal_move_z: 10
+screw_thread: CW-M4
+speed: 150
+
+# [bed_screws]
+# screw1: 25, 21
+# screw1_name: Front left
+# screw2: 285, 21
+# screw2_name: Front right
+# screw3: 285, 281
+# screw3_name: Back right
+# screw4: 25, 281
+# screw4_name: Back left
+# speed: 150
+
+# [screws_tilt_adjust]
+# screw1: 25, 21
+# screw1_name: Front left
+# screw2: 285, 21
+# screw2_name: Front right
+# screw3: 285, 281
+# screw3_name: Back right
+# screw4: 25, 281
+# screw4_name: Back left
+# screw_thread: CW-M4
+# speed: 150
+
+#######################################
+#   Bed Mesh
+#######################################
+[bed_mesh]
+speed: 300
+horizontal_move_z: 2
+zero_reference_position: 152.5, 152.5
+mesh_min: 30, 30
+mesh_max: 270, 270
+probe_count: 14, 14
+algorithm: bicubic
+bicubic_tension: 0.3
+mesh_pps: 2, 2
+fade_start: 1
+fade_end: 10
+split_delta_z: 0.01
+move_check_distance: 4
+
+#######################################
+#   Z Tilt and Screws
+#######################################
+[z_tilt]
+z_positions:
+    -17.5,152.5
+    335.7,152.5
+points:
+    40, 171.3           # Assumes we are using the stew675 beacon mount offsets of X=0, Y=-18.8
+    265, 171.3          # Assumes we are using the stew675 beacon mount offsets of X=0, Y=-18.8
+speed: 200
+horizontal_move_z: 5
+retries: 5
+retry_tolerance: 0.006
+
+#######################################
+# Extruder Settings
+#######################################
+[extruder]
+step_pin: toolhead:PB9
+dir_pin: toolhead:PB8
+enable_pin: !toolhead:PC15
+rotation_distance: 53.7
+gear_ratio: 1517:170
+microsteps: 16
+full_steps_per_rotation: 200
+nozzle_diameter: 0.500
+min_temp: 0
+max_temp: 370
+min_extrude_temp: 175
+smooth_time: 0.000001
+heater_pin: toolhead:PB3
+sensor_type: MAX6675
+sensor_pin: toolhead:PB12
+spi_speed: 100000
+spi_software_sclk_pin: toolhead:PB13
+spi_software_mosi_pin: toolhead:PA11
+spi_software_miso_pin: toolhead:PB14
+max_power: 1 
+
+pressure_advance: 0.032
+pressure_advance_smooth_time: 0.03
+max_extrude_cross_section: 500
+instantaneous_corner_velocity: 10
+max_extrude_only_distance: 1000
+max_extrude_only_velocity: 5000
+max_extrude_only_accel: 5000
+step_pulse_duration: 0.000002
+
+#control: mpc
+heater_power: 86 
+cooling_fan: fan_generic cooling_fan
+ambient_temp_sensor: temperature_sensor beacon_coil
+filament_diameter: 1.75
+filament_density: 1.20
+filament_heat_capacity: 1.80 
+
+[tmc2209 extruder]
+uart_pin: toolhead:PC13
+interpolate: false
+run_current: 0.714
+stealthchop_threshold: 0
+sense_resistor: 0.11
+
+[autotune_tmc extruder]
+motor: qidi_extruder_motors
+tuning_goal: performance
+
+#######################################
+# Resonance Testing
+#######################################
+# [adxl345]
+# cs_pin: toolhead:PA4
+# spi_software_sclk_pin: toolhead:PA5
+# spi_software_mosi_pin: toolhead:PA7
+# spi_software_miso_pin: toolhead:PA6
+# axes_map: -x, z, -y
+
+# [resonance_tester]
+# accel_chip: adxl345
+# probe_points:
+#    150, 150, 10
+
+# [resonance_tester]
+# accel_per_hz: 150
+# max_smoothing: 0.5
+
+#[input_shaper]
+#enabled_extruders: extruder
+
+#######################################
+# Stepper Configs for XYZ
+#######################################
 [stepper_x]
 step_pin: PB4
 dir_pin: !PB3
@@ -218,68 +409,9 @@ sense_resistor: 0.11
 motor: qidi_z_motors
 tuning_goal: silent
 
-# ======================================================================
-# EXTRUDER & RETRACTION
-# ======================================================================
-[extruder]
-step_pin: toolhead:PB9
-dir_pin: toolhead:PB8
-enable_pin: !toolhead:PC15
-rotation_distance: 53.7
-gear_ratio: 1517:170
-microsteps: 16
-full_steps_per_rotation: 200
-nozzle_diameter: 0.500
-min_temp: 0
-max_temp: 370
-min_extrude_temp: 175
-smooth_time: 0.000001
-heater_pin: toolhead:PB3
-sensor_type: MAX6675
-sensor_pin: toolhead:PB12
-spi_speed: 100000
-spi_software_sclk_pin: toolhead:PB13
-spi_software_mosi_pin: toolhead:PA11
-spi_software_miso_pin: toolhead:PB14
-max_power: 1 
-
-pressure_advance: 0.032
-pressure_advance_smooth_time: 0.03
-max_extrude_cross_section: 500
-instantaneous_corner_velocity: 10
-max_extrude_only_distance: 1000
-max_extrude_only_velocity: 5000
-max_extrude_only_accel: 5000
-step_pulse_duration: 0.000002
-
-#control: mpc
-heater_power: 86 
-cooling_fan: fan_generic cooling_fan
-ambient_temp_sensor: temperature_sensor beacon_coil
-filament_diameter: 1.75
-filament_density: 1.20
-filament_heat_capacity: 1.80 
-
-[tmc2209 extruder]
-uart_pin: toolhead:PC13
-interpolate: false
-run_current: 0.714
-stealthchop_threshold: 0
-sense_resistor: 0.11
-
-[autotune_tmc extruder]
-motor: qidi_extruder_motors
-tuning_goal: performance
-
-[firmware_retraction]
-retract_length: 0.8
-retract_speed: 50
-unretract_extra_length: 0
-unretract_speed: 50
-
-# ======================================================================
-# HEATERS & TEMPERATURE SENSORS
-# ======================================================================
+#######################################
+# Heaters
+#######################################
 [heater_bed]
 heater_pin: PB10
 sensor_type: NTC 100K MGB18-104F39050L32
@@ -288,12 +420,6 @@ max_power: 1.0
 pwm_cycle_time: 0.001
 min_temp: 0
 max_temp: 125
-
-[verify_heater heater_bed]
-max_error: 200
-check_gain_time: 60
-hysteresis: 10
-heating_gain: 1
 
 [heater_generic chamber]
 heater_pin: PC8
@@ -314,21 +440,15 @@ pid_Kd=5000
 min_temp: -100
 max_temp: 80
 
+[temperature_sensor chamber_probe]
+sensor_type: NTC 100K MGB18-104F39050L32
+sensor_pin: PA1
+
 [verify_heater chamber]
 max_error: 400
 check_gain_time: 600
 hysteresis: 5
 heating_gain: 2
-
-[verify_heater extruder]
-max_error: 120
-check_gain_time: 20
-hysteresis: 5
-heating_gain: 1
-
-[temperature_sensor chamber_probe]
-sensor_type: NTC 100K MGB18-104F39050L32
-sensor_pin: PA1
 
 [temperature_sensor chamber_thermal_protection_sensor]
 sensor_type: NTC 100K MGB18-104F39050L32
@@ -336,22 +456,21 @@ sensor_pin: PC2
 min_temp: -100
 max_temp: 140
 
-[temperature_sensor mainboard_mcu]
-sensor_type: temperature_mcu
-sensor_mcu: mcu
+[verify_heater extruder]
+max_error: 120
+check_gain_time: 20
+hysteresis: 5
+heating_gain: 1
 
-[temperature_sensor toolhead_mcu]
-sensor_type: temperature_mcu
-sensor_mcu: toolhead
+[verify_heater heater_bed]
+max_error: 200
+check_gain_time: 60
+hysteresis: 10
+heating_gain: 1
 
-[temperature_sensor raspberry_pi]
-sensor_type: temperature_host
-min_temp: 10
-max_temp: 100
-
-# ======================================================================
-# FANS
-# ======================================================================
+#######################################
+# Fans
+#######################################
 [fan_generic cooling_fan]
 pin: toolhead:PA8
 max_power: 1.0
@@ -399,105 +518,6 @@ fan_speed: 1
 kick_start_time: 0
 stepper: stepper_x
 
-# ======================================================================
-# BED LEVELING & MESH
-# ======================================================================
-[bed_mesh]
-speed: 300
-horizontal_move_z: 2
-zero_reference_position: 152.5, 152.5
-mesh_min: 30, 30
-mesh_max: 270, 270
-probe_count: 14, 14
-algorithm: bicubic
-bicubic_tension: 0.3
-mesh_pps: 2, 2
-fade_start: 1
-fade_end: 10
-split_delta_z: 0.01
-move_check_distance: 4
-
-[bed_screws]
-screw1: 21, 24
-screw1_name: Front left
-screw2: 278, 24
-screw2_name: Front right
-screw3: 278, 283
-screw3_name: Back right
-screw4: 21, 283
-screw4_name: Back left
-speed: 150
-
-[screws_tilt_adjust]
-screw1: 21, 24
-screw1_name: Front left
-screw2: 278, 24
-screw2_name: Front right
-screw3: 278, 283
-screw3_name: Back right
-screw4: 21, 283
-screw4_name: Back left
-horizontal_move_z: 10
-screw_thread: CW-M4
-speed: 150
-
-[z_tilt]
-z_positions:
-    -17.5,152.5
-    335.7,152.5
-points:
-    40, 171.3           # Assumes we are using the stew675 beacon mount offsets of X=0, Y=-18.8
-    265, 171.3          # Assumes we are using the stew675 beacon mount offsets of X=0, Y=-18.8
-speed: 200
-horizontal_move_z: 5
-retries: 5
-retry_tolerance: 0.006
-
-# ======================================================================
-# MISCELLANEOUS & DISABLED CONFIGS
-# ======================================================================
-[soak_my_bed]
-
-[output_pin caselight]
-pin: PC7
-pwm: false
-shutdown_value: 1
-value: 1
-
-[output_pin buzzer]
-pin: PA2
-pwm: false
-shutdown_value: 0
-value: 0
-
-# [save_variables]
-# filename: ~/printer_data/config/variables.cfg
-
-# [output_pin ctlyd]
-# pin: PA14
-# pwm: false
-# shutdown_value: 0
-# value: 0
-
-# [adxl345]
-# cs_pin: toolhead:PA4
-# spi_software_sclk_pin: toolhead:PA5
-# spi_software_mosi_pin: toolhead:PA7
-# spi_software_miso_pin: toolhead:PA6
-# axes_map: -x, z, -y
-
-# [resonance_tester]
-# accel_chip: adxl345
-# probe_points:
-#    150, 150, 10
-
-# [resonance_tester]
-# accel_per_hz: 150
-# max_smoothing: 0.5
-
-#[input_shaper]
-#enabled_extruders: extruder
-
 # [temperature_fan board_fan]
 # pin: PC4
 # max_power: 1.0
@@ -534,6 +554,7 @@ value: 0
 #heater_temp: 50.0
 #fan_speed: 1.0
 
+# cooling fan for @spookniks mod
 # [fan_generic cooling_fan]
 # pin: toolhead:PB10
 # max_power: 1.0
@@ -542,6 +563,9 @@ value: 0
 # hardware_pwm: false
 # kick_start_time: 0.100
 
+#######################################
+# Filament Sensors
+#######################################
 # [filament_switch_sensor filament]
 # switch_pin: PC3
 # pause_on_runout: True
@@ -580,28 +604,26 @@ value: 0
 # event_delay: 3.0
 # pause_delay: 0.5
 
-# [bed_screws]
-# screw1: 25, 21
-# screw1_name: Front left
-# screw2: 285, 21
-# screw2_name: Front right
-# screw3: 285, 281
-# screw3_name: Back right
-# screw4: 25, 281
-# screw4_name: Back left
-# speed: 150
+#######################################
+ # Miscellaneous Outputs
+#######################################
+[output_pin caselight]
+pin: PC7
+pwm: false
+shutdown_value: 1
+value: 1
 
-# [screws_tilt_adjust]
-# screw1: 25, 21
-# screw1_name: Front left
-# screw2: 285, 21
-# screw2_name: Front right
-# screw3: 285, 281
-# screw3_name: Back right
-# screw4: 25, 281
-# screw4_name: Back left
-# screw_thread: CW-M4
-# speed: 150
+[output_pin buzzer]
+pin: PA2
+pwm: false
+shutdown_value:0
+value:0
+
+# [output_pin ctlyd]
+# pin: PA14
+# pwm: false
+# shutdown_value: 0
+# value: 0
 
 #*# <---------------------- SAVE_CONFIG ---------------------->
 #*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.

@@ -22,60 +22,10 @@ gcode:
     M141 S0                                              # Turn off heated chamber
 
     G91                                                  # Relative positioning
-    {% if current_extruder_temp >= min_extrusion_temp + 5 %}   # Check if the hotend is hot enough to perform a retraction (with a small gap)  
-        G0 E-4.0 F300                                    # Retract filament
-    {% endif %}
-
-    #####################################################################
-
-    G90
-    
-    G0 Z{z_hop} F3600                                    # Move bed down a bit
-    
-    # G90
-    G1 Y300 F600
-    G1 X95 F12000
-    G1 Y314 F9000
-    G1 Y324 F600
-
-    G1 X58 F12000
-    G1 X78 F12000
-    G1 Y324
-    G1 X58 F12000
-    G1 X78 F12000
-    G1 Y323.5
-    G1 X58 F12000
-    G1 X78 F12000
-    G1 Y323
-    G1 X58 F12000
-    G1 X78 F12000
-    G1 Y322.5
-    G1 X58 F12000
-    G1 X78 F12000
-    G1 Y322
-    G1 X58 F12000
-    G1 X75 F12000
-    G1 Y321.5
-    G2 I0.8 J0.8 F600
-    G2 I0.8 J0.8 F600
-    G2 I0.8 J0.8 F600
-    G1 Y324 F600
-    
-    M106 S0
-
-    G1 X95 F12000
-    G1 Y316 F9000
-    G1 Y312 F600
-    M400
-
-    #####################################################################
-
-    # G91                                                  # Relative positioning
     # {% if current_extruder_temp >= min_extrusion_temp + 5 %}   # Check if the hotend is hot enough to perform a retraction (with a small gap)  
     #     G0 E-4.0 F300                                    # Retract filament
     # {% endif %}
-
-    # G0 Z{z_hop} F3600                                    # Move bed down a bit
+    G0 Z{z_hop} F3600                                    # Move bed down a bit
     G90                                                  # Absolute positioning
     G0 X{max_x/2} Y{max_y-40} F20000                     # Move nozzle to remove stringing
     _Z_CLEARANCE DISTANCE={z_clearance}                  # Lower bed
